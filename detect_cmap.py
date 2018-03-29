@@ -22,7 +22,7 @@ from colorspacious import cspace_convert
 def convert_to_img(fn):
     with tempfile.TemporaryDirectory() as td:
         basen = os.path.basename(fn)
-        basen = os.path.splitext(basen)[0] # .replace('.pdf', '')
+        basen = os.path.splitext(basen)[0]
         outpre = os.path.join(td, basen)
 
         subprocess.check_call(['pdftoppm', '-png', fn, outpre])
@@ -37,9 +37,10 @@ def parse_img(fn):
     # Check that we have an RGB array (as opposed to grayscale/RGBA)
     assert im.shape[2] == 3
 
-    # Remove white first (large reduction in size of array)
+    # Remove white and black first (large reduction in size of array)
     # NOTE: assumes an 8-bit image
     im = im[np.sum(im, axis=2) != 255*3]
+    im = im[np.sum(im, axis=1) != 0]
 
     # im = im.reshape(im.shape[0] * im.shape[1], 3)
     im = pd.DataFrame.from_records(im, columns=['R', 'G', 'B'])
@@ -129,6 +130,8 @@ def find_cm_dists(df, max_diff=1.0):
             idx.size / df.shape[0]
         ]
 
+    cm_stats.sort_values('pct_cm', ascending=False, inplace=True)
+
     return cm_stats
 
 
@@ -149,6 +152,9 @@ def main():
     # Find nearest color for each page
     df = convert_to_jab(df)
     df_cmap = df.groupby('fn').apply(find_cm_dists)
+
+    # filter output before writing
+    df_cmap = df_cmap[df_cmap['pct_cm'] > 0.5]
     df_cmap.to_csv(name + '_cm.csv')
 
     return
