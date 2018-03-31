@@ -134,6 +134,9 @@ def find_cm_dists(df, max_diff=1.0):
 
     return cm_stats
 
+def has_rainbow(df_cmap):
+    return True
+
 
 def main():
     parser = argparse.ArgumentParser()
