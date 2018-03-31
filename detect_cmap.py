@@ -9,14 +9,16 @@ import subprocess
 import glob
 import itertools
 
+try:
+    import numpy as np
+    import pandas as pd
+    from sklearn.neighbors import NearestNeighbors
 
-import numpy as np
-import pandas as pd
-from sklearn.neighbors import NearestNeighbors
-
-import skimage.io
-import matplotlib.pyplot as plt
-from colorspacious import cspace_convert
+    import skimage.io
+    import matplotlib.pyplot as plt
+    from colorspacious import cspace_convert
+except:
+    print("Calculations will fail if this is a worker")
 
 
 def convert_to_img(fn):
@@ -89,7 +91,11 @@ def build_cmap_knn(n=256):
         cmaps[name] = NearestNeighbors(n_neighbors=1, metric='euclidean').fit(cmaps[name])
     return cmaps
 
-cmap_knn = build_cmap_knn()
+try:
+    cmap_knn = build_cmap_knn()
+except:
+    print("Calculations will fail if this is a worker")
+
 
 
 def convert_to_jab(df):
@@ -136,6 +142,29 @@ def find_cm_dists(df, max_diff=1.0):
 
 def has_rainbow(df_cmap):
     return True
+
+
+def paper_has_rainbow(fn):
+    """Full paper processing code
+    """
+
+    df = pd.concat([parse_img(p) for p in convert_to_img(fn)],
+        ignore_index=True, copy=False)
+
+    # Write out RGB colors found
+    name, _ = os.path.splitext(fn)
+    df.to_csv(name + '_colors.csv', index=False)
+
+
+    # Find nearest color for each page
+    df = convert_to_jab(df)
+    df_cmap = df.groupby('fn').apply(find_cm_dists)
+
+    # filter output before writing
+    df_cmap = df_cmap[df_cmap['pct_cm'] > 0.5]
+    df_cmap.to_csv(name + '_cm.csv')
+
+    return has_rainbow(df_cmap)
 
 
 def main():

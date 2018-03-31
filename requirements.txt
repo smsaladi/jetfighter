@@ -4,15 +4,8 @@ flask
 Flask-SQLAlchemy
 Flask-RQ2
 Flask-Mail
+Flask-table
 
 pymysql
 
 tweepy
-
-colorspacious
-scipy
-scikit-learn
-scikit-image
-matplotlib
-numpy
-pandas

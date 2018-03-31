@@ -1,0 +1,9 @@
+python-dotenv
+
+colorspacious
+scipy
+scikit-learn
+scikit-image
+matplotlib
+numpy
+pandas

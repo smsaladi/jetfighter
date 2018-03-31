@@ -4,22 +4,19 @@
 import os
 import os.path
 import re
-import sqlalchemy
 
 from flask import Flask, render_template
-# from flask_table import Table, Col
+from flask_table import Table, Col
 from flask_rq2 import RQ
 from flask_mail import Message
 
 import click
 import tweepy
 
-import pandas as pd
-
 from models import db, Biorxiv, Test
 from twitter_listener import StreamListener
 from biorxiv_scraper import find_authors, download_paper
-from detect_cmap import convert_to_img, parse_img, convert_to_jab, find_cm_dists, has_rainbow
+from detect_cmap import paper_has_rainbow
 
 app = Flask(__name__)
 
@@ -44,18 +41,18 @@ app.config['MAIL_PORT'] = 587
 app.config['MAIL_USE_TLS'] = True
 app.config['MAIL_USERNAME'] = os.environ['MAIL_USERNAME']
 app.config['MAIL_PASSWORD'] = os.environ['MAIL_PASSWORD']
-app.config['MAIL_DEFAULT_SENDER'] = os.environ['MAIL_USERNAME']
+app.config['MAIL_DEFAULT_SENDER'] = os.environ['MAIL_DEFAULT_SENDER']
 # https://technet.microsoft.com/en-us/library/exchange-online-limits.aspx
 # 30 messages per minute rate limit
 # app.config['MAIL_MAX_EMAILS'] = 30
 
 app.config['WEB_PASSWORD'] = os.environ['WEB_PASSWORD']
 
-# class PapersTable(Table):
-#     text = Col('Text')
-#     user_name = Col('User name')
-#     created = Col('Created')
-#     parse_status = Col('Parse status')
+class PapersTable(Table):
+    id = Col('Id')
+    text = Col('Text')
+    created = Col('Created')
+    parse_status = Col('Parse status')
 
 
 @app.route('/')
@@ -63,10 +60,8 @@ def webapp():
     """Renders the website with current results
     """
     papers = Biorxiv.query.all()
-    return papers
-    # table = PapersTable(papers)
-    # return table.__html__()
-    return render_template('main.html')
+    table = PapersTable(papers)
+    return render_template('main.html', table=table.__html__())
 
 
 def webauth():
@@ -169,29 +164,12 @@ def process_paper(dbobj, url):
     """
 
     with download_paper(url) as fn:
-        df = pd.concat([parse_img(p) for p in convert_to_img(fn)],
-            ignore_index=True, copy=False)
-
-        # Write out RGB colors found
-        name, _ = os.path.splitext(fn)
-        df.to_csv(name + '_colors.csv', index=False)
-
-
-        # Find nearest color for each page
-        df = convert_to_jab(df)
-        df_cmap = df.groupby('fn').apply(find_cm_dists)
-
-        # filter output before writing
-        df_cmap = df_cmap[df_cmap['pct_cm'] > 0.5]
-        df_cmap.to_csv(name + '_cm.csv')
-
-        if has_rainbow(df_cmap):
-            authors = find_authors(url)
+        if paper_has_rainbow(fn):
+            dbobj.parse_status = find_authors(url)
         else:
-            authors = ''
+            dbobj.parse_status = "no rainbow"
 
         # update database
-        dbobj.parse_status = authors
         db.session.commit()
 
         return

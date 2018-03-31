@@ -19,6 +19,12 @@ heroku config:push -o #  Writes the contents of a local file into heroku config 
 heroku config:pull # Writes the contents of heroku config into a local file
 ```
 
+* Put private info into environment (bash-like shells)
+
+```shell
+sed -e '/^$/d' -e '/^#/d' -e 's/^/export /' .env | source /dev/stdin
+```
+
 * Testing only
 
 ```shell
