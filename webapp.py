@@ -4,19 +4,22 @@
 import os
 import os.path
 import re
+import json
+import tempfile
 
 from flask import Flask, render_template
 from flask_table import Table, Col
 from flask_rq2 import RQ
 from flask_mail import Message
 
-import click
 import tweepy
 
 from models import db, Biorxiv, Test
 from twitter_listener import StreamListener
+
 from biorxiv_scraper import find_authors, download_paper
-from detect_cmap import paper_has_rainbow
+from detect_cmap import detect_rainbow_from_file
+
 
 app = Flask(__name__)
 
@@ -41,16 +44,26 @@ app.config['MAIL_PORT'] = 587
 app.config['MAIL_USE_TLS'] = True
 app.config['MAIL_USERNAME'] = os.environ['MAIL_USERNAME']
 app.config['MAIL_PASSWORD'] = os.environ['MAIL_PASSWORD']
-app.config['MAIL_DEFAULT_SENDER'] = os.environ['MAIL_DEFAULT_SENDER']
+app.config['MAIL_DEFAULT_SENDER'] = os.environ['MAIL_DEFAULT_SENDER'].replace("'", "")
 # https://technet.microsoft.com/en-us/library/exchange-online-limits.aspx
 # 30 messages per minute rate limit
-# app.config['MAIL_MAX_EMAILS'] = 30
+app.config['MAIL_MAX_EMAILS'] = 30
 
 app.config['WEB_PASSWORD'] = os.environ['WEB_PASSWORD']
 
+app.config['DEBUG'] = os.environ.get('DEBUG')
+
+
+tweepy_auth = tweepy.OAuthHandler(
+    app.config['TWITTER_APP_KEY'], app.config['TWITTER_APP_SECRET'])
+tweepy_auth.set_access_token(
+    app.config['TWITTER_KEY'], app.config['TWITTER_SECRET'])
+tweepy_api = tweepy.API(tweepy_auth)
+
+
 class PapersTable(Table):
     id = Col('Id')
-    text = Col('Text')
+    title = Col('Title')
     created = Col('Created')
     parse_status = Col('Parse status')
 
@@ -79,82 +92,62 @@ def send_email():
     return render_template('email.html')
 
 
-@app.cli.command()
-@click.option('--test', is_flag=True)
-def monitor_biorxiv(test):
-    """Starts the twitter listener on the command line,
-       writes tweets to the database,
+def parse_tweet(t, db=db, objclass=Biorxiv, verbose=True):
+    """Parses tweets for relevant data,
+       writes each paper to the database,
        dispatches a processing job to the processing queue (rq)
     """
+    try:
+        url = t.entities['urls'][0]['expanded_url']
+        code = os.path.basename(url)
+    except:
+        print('Error parsing url/code from tweet_id', t.id_str)
+        return
 
-    auth = tweepy.OAuthHandler(
-        app.config['TWITTER_APP_KEY'], app.config['TWITTER_APP_SECRET'])
-    auth.set_access_token(
-        app.config['TWITTER_KEY'], app.config['TWITTER_SECRET'])
-    api = tweepy.API(auth)
+    try:
+        title = re.findall('(.*?)\shttp', t.full_text)[0]
+    except:
+        # keep ASCII only (happens with some Test tweets)
+        title = re.sub(r'[^\x00-\x7f]', r'', t.full_text)
 
-    if test:
-        def insert_db(**kwargs):
-            obj = Test(**kwargs)
-            db.session.add(obj)
-            db.session.commit()
-            return
+    if verbose:
+        print(t.id_str, title[:25], end='\r')
 
-        stream_listener = StreamListener(insert_db)
-        stream = tweepy.Stream(auth=api.auth, listener=stream_listener,
-            trim_user='True', include_entities=True, tweet_mode="extended")
-        stream.filter(track=["clinton", "sanders"])
-    else:
-        def insert_db(**kwargs):
-            obj = Biorxiv(**kwargs)
-            db.session.add(obj)
-            db.session.commit()
-            return
+    obj = objclass(
+        id=code,
+        created=t.created_at,
+        title=title,
+    )
 
-        stream_listener = StreamListener(insert_db)
-        stream = tweepy.Stream(auth=api.auth, listener=stream_listener,
-            trim_user='True', include_entities=True, tweet_mode="extended")
-        stream.filter(follow=['biorxivpreprint'])
+    db.session.merge(obj)
+    db.session.commit()
 
+    process_paper.queue(obj)
     return
+
+
+@app.cli.command()
+def monitor_biorxiv():
+    """Starts the twitter listener on the command line
+    """
+
+    stream_listener = StreamListener(parse_tweet)
+    stream = tweepy.Stream(auth=tweepy_auth, listener=stream_listener,
+        trim_user='True', include_entities=True, tweet_mode='extended')
+    stream.filter(follow=['biorxivpreprint'])
 
 
 @app.cli.command()
 def retrieve_timeline():
-    """Picks up current timeline (for testing),
-       writes tweets to the database,
-       dispatches a processing job to the processing queue (rq)
+    """Picks up current timeline (for testing)
     """
-
-    auth = tweepy.OAuthHandler(
-        app.config['TWITTER_APP_KEY'], app.config['TWITTER_APP_SECRET'])
-    auth.set_access_token(
-        app.config['TWITTER_KEY'], app.config['TWITTER_SECRET'])
-    api = tweepy.API(auth)
-
-    def insert_db(**kwargs):
-        obj = Test(**kwargs)
-        db.session.merge(obj)
-        db.session.commit()
-        return obj
-
-    for t in api.user_timeline(screen_name='biorxivpreprint', trim_user='True',
-            include_entities=True, tweet_mode="extended"):
-        text = re.sub(r'[^\x00-\x7f]',r'', t.full_text)
-        print(t.full_text)
-        dbobj = insert_db(id=t.id,
-                      user_id=t.user.id,
-                      created=t.created_at,
-                      text=text)
-
-        url = t.entities['urls'][0]['expanded_url']
-        process_paper.queue(dbobj, url)
-
-    return
+    for t in tweepy_api.user_timeline(screen_name='biorxivpreprint',
+            trim_user='True', include_entities=True, tweet_mode='extended'):
+        parse_tweet(t)
 
 
 @rq.job(timeout='10m')
-def process_paper(dbobj, url):
+def process_paper(obj):
     """Processes paper starting from url/code
 
     1. download paper
@@ -163,13 +156,11 @@ def process_paper(dbobj, url):
     4. update database entry with colormap detection and author info
     """
 
-    with download_paper(url) as fn:
-        if paper_has_rainbow(fn):
-            dbobj.parse_status = find_authors(url)
-        else:
-            dbobj.parse_status = "no rainbow"
-
-        # update database
+    with tempfile.TemporaryDirectory() as td:
+        fn = download_paper(obj.id, outdir=td)
+        obj.parse_status, obj.parse_data = detect_rainbow_from_file(fn)
+        obj.parse_data = obj.parse_data.to_json()
+        if obj.parse_status:
+            obj.author_contact = json.dumps(find_authors(obj.id))
+        db.session.merge(obj)
         db.session.commit()
-
-        return

@@ -9,41 +9,41 @@ import re
 
 import time
 import random
-import tempfile
+
+def baseurl(code):
+    return 'http://biorxiv.org/cgi/content/short/{}'.format(code)
 
 def test_find_authors():
-    assert find_authors('http://biorxiv.org/cgi/content/short/121814') == ['raul.peralta@uaem.mx']
+    assert find_authors('121814') == \
+        {'all': ['raul.peralta@uaem.mx'], 'corr': ['raul.peralta@uaem.mx']}
 
-def find_authors(url):
-    """Retrieve page and capture author emails as strings
+def find_authors(code):
+    """Retrieves page and captures author emails as list of strings
     """
-    # url = 'http://biorxiv.org/cgi/content/short/{}.article-info'.format(code)
-    url += '.article-info'
+    url = baseurl(code) + '.article-info'
     page = requests.get(url)
 
-    addrs = [m.replace('{at}', '@')
-        for m in re.findall('.*\>(.*?\{at\}.*?)\<', page.text)]
+    def re_email(r):
+        return [m.replace('{at}', '@') for m in re.findall(r, page.text)]
 
-    return list(set(addrs))
+    addrs = re_email('.*\>(.*?\{at\}.*?)\<')
+    corr = re_email('Corresponding author.*>(.*\{at\}.*?)<.*')
 
+    return dict(corr=corr, all=list(set(addrs)))
 
-@contextmanager
-def download_paper(url, timeout=10):
-    """Downloads paper
+def download_paper(code, outdir, timeout=10, debug=False):
+    """Downloads paper and returns filename
     """
+    url = baseurl(code) + '.pdf'
+    fn = os.path.join(outdir, os.path.basename(url))
 
-    # url = 'http://biorxiv.org/cgi/content/short/{}.pdf'.format(code)
-    url = url + '.pdf'
-    fn = os.path.join('data', os.path.basename(url))
-
-    # with tempfile.NamedTemporaryFile(delete=False) as fh:
     with open(fn, 'wb') as fh:
-        print('fetching %s into %s' % (url, fn))
+        if debug:
+            print('Fetching %s into %s' % (url, fn))
 
-        req = requests.get(url) #, timeout=timeout)
+        req = requests.get(url, timeout=timeout)
         fh.write(req.content)
-        print('done fetching')
 
-        time.sleep(0.05 + random.uniform(0,0.1))
+        time.sleep(0.05 + random.uniform(0, 0.1))
 
-    yield fn
+    return fn
