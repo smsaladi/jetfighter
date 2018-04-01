@@ -8,7 +8,11 @@ import random
 import re
 
 import requests
-from bs4 import BeautifulSoup
+
+try:
+    from bs4 import BeautifulSoup
+except:
+    print('Calculations will fail if this is a worker')
 
 def baseurl(code):
     return 'http://biorxiv.org/cgi/content/short/{}'.format(code)

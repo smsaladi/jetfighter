@@ -9,5 +9,6 @@ Flask-table
 pymysql
 
 tweepy
+pandas
 
 pytest
