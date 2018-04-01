@@ -4,13 +4,13 @@
 import os
 import os.path
 import re
-import json
 import tempfile
 
 from flask import Flask, render_template
 from flask_table import Table, Col
 from flask_rq2 import RQ
 from flask_mail import Message
+from sqlalchemy import desc
 
 import tweepy
 
@@ -18,7 +18,6 @@ import pytest
 
 from models import db, Biorxiv, Test
 from twitter_listener import StreamListener
-
 from biorxiv_scraper import find_authors, download_paper
 from detect_cmap import detect_rainbow_from_file
 
@@ -74,7 +73,10 @@ class PapersTable(Table):
 def webapp():
     """Renders the website with current results
     """
-    papers = Biorxiv.query.all()
+    papers = (Biorxiv.query
+                     .order_by(desc(Biorxiv.created))
+                     .limit(50)
+                     .all())
     table = PapersTable(papers)
     return render_template('main.html', table=table.__html__())
 
