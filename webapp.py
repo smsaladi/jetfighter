@@ -14,6 +14,8 @@ from flask_mail import Message
 
 import tweepy
 
+import pytest
+
 from models import db, Biorxiv, Test
 from twitter_listener import StreamListener
 
@@ -163,3 +165,39 @@ def process_paper(obj):
             obj.author_contact = find_authors(obj.id)
         db.session.merge(obj)
         db.session.commit()
+
+## NOTE: NEEDS WORK
+@pytest.fixture()
+def test_setup_cleanup():
+    # should only be one, but... just in case
+    for obj in Test.query.filter_by(id='172627v1').all():
+        db.session.delete(obj)
+    db.session.commit()
+
+    # Delete temporary row
+    for obj in Test.query.filter_by(id='172627v1').all():
+        db.session.delete(obj)
+    db.session.commit()
+
+def test_integration(test_setup_cleanup):
+    """Submit job for known jet colormap. Remove from database beforehand.
+    Write to database.
+    Check for written authors.
+    """
+
+    testq = rq.Queue('testq', async=False)
+
+    preobj = Test(id='172627v1')
+    testq.enqueue(process_paper, preobj)
+
+    postobj = Test.query.filter_by(id='172627v1').first()
+
+    # check that document was correctly identified as having a rainbow colormap
+    assert postobj.parse_status
+
+    # check that authors were correctly retrieved
+    authors = postobj.author_contact
+    assert authors['corr'] == ['t.ellis@imperial.ac.uk']
+    assert set(authors['all']) == set([
+        'o.borkowski@imperial.ac.uk', 'carlos.bricio@gmail.com',
+        'g.stan@imperial.ac.uk', 't.ellis@imperial.ac.uk'])
