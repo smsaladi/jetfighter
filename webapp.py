@@ -159,8 +159,7 @@ def process_paper(obj):
     with tempfile.TemporaryDirectory() as td:
         fn = download_paper(obj.id, outdir=td)
         obj.parse_status, obj.parse_data = detect_rainbow_from_file(fn)
-        obj.parse_data = obj.parse_data.to_json()
         if obj.parse_status:
-            obj.author_contact = json.dumps(find_authors(obj.id))
+            obj.author_contact = find_authors(obj.id)
         db.session.merge(obj)
         db.session.commit()
