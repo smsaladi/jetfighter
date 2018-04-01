@@ -3,12 +3,12 @@
 """
 
 import os.path
-from contextlib import contextmanager
-import requests
-import re
-
 import time
 import random
+import re
+
+import requests
+from bs4 import BeautifulSoup
 
 def baseurl(code):
     return 'http://biorxiv.org/cgi/content/short/{}'.format(code)
@@ -22,14 +22,18 @@ def find_authors(code):
     """
     url = baseurl(code) + '.article-info'
     page = requests.get(url)
+    soup = BeautifulSoup(page.text, 'lxml')
 
-    def re_email(r):
-        return [m.replace('{at}', '@') for m in re.findall(r, page.text)]
+    addr = soup(text=re.compile('\{at\}'))
+    addr = [t.replace('{at}', '@') for t in addr]
 
-    addrs = re_email('.*\>(.*?\{at\}.*?)\<')
-    corr = re_email('Corresponding author.*>(.*\{at\}.*?)<.*')
+    # corresponding authors will have their email listed in more than 1 place
+    corr = list(set([x for x in addr if addr.count(x) > 1]))
+    # if not, use the last author
+    if not corr:
+        corr = [addr[-1]]
 
-    return dict(corr=corr, all=list(set(addrs)))
+    return dict(corr=corr, all=list(set(addr)))
 
 def download_paper(code, outdir, timeout=10, debug=False):
     """Downloads paper and returns filename
