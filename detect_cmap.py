@@ -94,6 +94,9 @@ cmap_names = [('Perceptually Uniform Sequential', [
             'gnuplot', 'gnuplot2', 'CMRmap', 'cubehelix', 'brg', 'hsv',
             'gist_rainbow', 'rainbow', 'jet', 'nipy_spectral', 'gist_ncar'])]
 
+# don't keep grey colormaps
+drop_maps = ['Greys', 'binary', 'gist_yarg', 'gist_gray', 'gray']
+
 def build_cmap_knn(n=256):
     """Builds a nearest neighbor graph for each colormap in matplotlib
     """
@@ -101,10 +104,11 @@ def build_cmap_knn(n=256):
     cmaps = {}
     cm_names = [cat[1] for cat in cmap_names]
     for name in itertools.chain.from_iterable(cm_names):
-        cm = plt.get_cmap(name)
-        cmaps[name] = cm(np.linspace(0, 1, n))[:,:3]
-        cmaps[name] = cspace_convert(cmaps[name], "sRGB1", "CAM02-UCS")
-        cmaps[name] = NearestNeighbors(n_neighbors=1, metric='euclidean').fit(cmaps[name])
+        if name not in drop_maps:
+            cm = plt.get_cmap(name)
+            cmaps[name] = cm(np.linspace(0, 1, n))[:,:3]
+            cmaps[name] = cspace_convert(cmaps[name], "sRGB1", "CAM02-UCS")
+            cmaps[name] = NearestNeighbors(n_neighbors=1, metric='euclidean').fit(cmaps[name])
     return cmaps
 
 try:
