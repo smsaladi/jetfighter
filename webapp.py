@@ -68,7 +68,7 @@ def webapp():
     """
     papers = (Biorxiv.query
                      .order_by(desc(Biorxiv.created))
-                     .limit(50)
+                     .limit(500)
                      .all())
     return render_template('main.html', papers=papers)
 
@@ -114,11 +114,11 @@ def parse_tweet(t, db=db, objclass=Biorxiv, verbose=True):
     except AttributeError:
         text = t.text
 
-    if verbose: 
+    if verbose:
         print(t.id_str, text[:25], end='\r')
     if not db:
         return
- 
+
     try:
         url = t.entities['urls'][0]['expanded_url']
         code = os.path.basename(url)
@@ -145,7 +145,7 @@ def parse_tweet(t, db=db, objclass=Biorxiv, verbose=True):
 
 
 @app.cli.command()
-@click.option('--test', is_flag=True) 
+@click.option('--test', is_flag=True)
 def monitor_biorxiv(test):
     """Starts the twitter listener on the command line
     """
@@ -159,7 +159,7 @@ def monitor_biorxiv(test):
     stream = tweepy.Stream(auth=tweepy_api.auth, listener=stream_listener,
             trim_user='True', include_entities=True, tweet_mode='extended')
     stream.filter(**filter_args)
- 
+
 
 @app.cli.command()
 def retrieve_timeline():
