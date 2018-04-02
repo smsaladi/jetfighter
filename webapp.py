@@ -11,6 +11,7 @@ from flask_rq2 import RQ
 from flask_mail import Message
 from sqlalchemy import desc
 
+import click
 import tweepy
 
 import pytest
@@ -149,6 +150,18 @@ def retrieve_timeline():
     for t in tweepy_api.user_timeline(screen_name='biorxivpreprint',
             trim_user='True', include_entities=True, tweet_mode='extended'):
         parse_tweet(t)
+
+@app.cli.command()
+@click.argument('ids', nargs=-1)
+def resubmit_job(ids):
+    """Picks up current timeline (for testing)
+    """
+    for i in ids:
+        rec = Biorxiv.query.filter_by(id=i).first()
+        if rec:
+            process_paper.queue(rec)
+        else:
+            print("id not yet in database")
 
 
 @rq.job(timeout='10m')
