@@ -1,0 +1,7 @@
+tr.detected {
+    color: #8e0152;
+}
+
+tr.notdetected {
+    color: #276419;
+}
