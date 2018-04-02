@@ -7,7 +7,6 @@ import re
 import tempfile
 
 from flask import Flask, render_template
-from flask_table import Table, Col
 from flask_rq2 import RQ
 from flask_mail import Message
 from sqlalchemy import desc
@@ -62,13 +61,6 @@ tweepy_auth.set_access_token(
 tweepy_api = tweepy.API(tweepy_auth)
 
 
-class PapersTable(Table):
-    id = Col('Id')
-    title = Col('Title')
-    created = Col('Created')
-    parse_status = Col('Parse status')
-
-
 @app.route('/')
 def webapp():
     """Renders the website with current results
@@ -77,8 +69,17 @@ def webapp():
                      .order_by(desc(Biorxiv.created))
                      .limit(50)
                      .all())
-    table = PapersTable(papers)
-    return render_template('main.html', table=table.__html__())
+    return render_template('main.html', papers=papers)
+
+@app.route('/result/<string:paper_id>')
+def show_results(paper_id):
+    """Have a buttons to resubmit job, modify email, and queue for send now/later
+    """
+    record = Biorxiv.query.filter_by(id=paper_id).first()
+    if not record:
+        return render_template('main', table='Paper not found')
+    #     testq = rq.Queue('testq', async=False)
+    return render_template('main', table=record.parse_data.to_html())
 
 
 def webauth():
