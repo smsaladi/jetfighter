@@ -78,9 +78,10 @@ def show_results(paper_id):
     """
     record = Biorxiv.query.filter_by(id=paper_id).first()
     if not record:
-        return render_template('main', table='Paper not found')
+        return render_template('result.html', table='Paper not found')
     #     testq = rq.Queue('testq', async=False)
-    return render_template('main', table=record.parse_data.to_html())
+    html = record.parse_data.to_html(bold_rows=False, index=False, border=0)
+    return render_template('result.html', table=html)
 
 
 def webauth():
