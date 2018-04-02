@@ -105,6 +105,16 @@ def parse_tweet(t, db=db, objclass=Biorxiv, verbose=True):
        dispatches a processing job to the processing queue (rq)
     """
     try:
+        text = t.extended_tweet["full_text"]
+    except AttributeError:
+        text = t.text
+
+    if verbose: 
+        print(t.id_str, text[:25], end='\r')
+    if not db:
+        return
+ 
+    try:
         url = t.entities['urls'][0]['expanded_url']
         code = os.path.basename(url)
     except:
@@ -112,13 +122,10 @@ def parse_tweet(t, db=db, objclass=Biorxiv, verbose=True):
         return
 
     try:
-        title = re.findall('(.*?)\shttp', t.full_text)[0]
+        title = re.findall('(.*?)\shttp', text)[0]
     except:
         # keep ASCII only (happens with some Test tweets)
-        title = re.sub(r'[^\x00-\x7f]', r'', t.full_text)
-
-    if verbose:
-        print(t.id_str, title[:25], end='\r')
+        title = re.sub(r'[^\x00-\x7f]', r'', text)
 
     obj = objclass(
         id=code,
@@ -130,19 +137,24 @@ def parse_tweet(t, db=db, objclass=Biorxiv, verbose=True):
     db.session.commit()
 
     process_paper.queue(obj)
-    return
 
 
 @app.cli.command()
-def monitor_biorxiv():
+@click.option('--test', is_flag=True) 
+def monitor_biorxiv(test):
     """Starts the twitter listener on the command line
     """
+    if test:
+        filter_args = dict(track=['clinton', 'sanders'])
+        stream_listener = StreamListener(lambda t: parse_tweet(t, db=None))
+    else:
+        filter_args = dict(follow=['biorxivpreprint'])
+        stream_listener = StreamListener(parse_tweet)
 
-    stream_listener = StreamListener(parse_tweet)
-    stream = tweepy.Stream(auth=tweepy_auth, listener=stream_listener,
-        trim_user='True', include_entities=True, tweet_mode='extended')
-    stream.filter(follow=['biorxivpreprint'])
-
+    stream = tweepy.Stream(auth=tweepy_api.auth, listener=stream_listener,
+            trim_user='True', include_entities=True, tweet_mode='extended')
+    stream.filter(**filter_args)
+ 
 
 @app.cli.command()
 def retrieve_timeline():
