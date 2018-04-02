@@ -107,6 +107,11 @@ def parse_tweet(t, db=db, objclass=Biorxiv, verbose=True):
     try:
         text = t.extended_tweet["full_text"]
     except AttributeError:
+        pass
+
+    try:
+        text = t.full_text
+    except AttributeError:
         text = t.text
 
     if verbose: 
@@ -160,7 +165,7 @@ def monitor_biorxiv(test):
 def retrieve_timeline():
     """Picks up current timeline (for testing)
     """
-    for t in tweepy_api.user_timeline(screen_name='biorxivpreprint',
+    for t in tweepy_api.user_timeline(screen_name='biorxivpreprint', count=1000,
             trim_user='True', include_entities=True, tweet_mode='extended'):
         parse_tweet(t)
 
