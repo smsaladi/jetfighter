@@ -20,11 +20,11 @@ class Biorxiv(db.Model):
 
     @hybrid_property
     def parse_data(self):
-        return pd.DataFrame.from_json(self._parse_data)
+        return pd.read_json(self._parse_data)
 
     @parse_data.setter
     def parse_data(self, df):
-        self._parse_data = df.to_json()
+        self._parse_data = df.reset_index().to_json()
 
     @hybrid_property
     def author_contact(self):
