@@ -153,7 +153,8 @@ def monitor_biorxiv(test):
         filter_args = dict(track=['clinton', 'sanders'])
         stream_listener = StreamListener(lambda t: parse_tweet(t, db=None))
     else:
-        filter_args = dict(follow=['biorxivpreprint'])
+        # user_id for 'biorxivpreprint'
+        filter_args = dict(follow=['1949132852'])
         stream_listener = StreamListener(parse_tweet)
 
     stream = tweepy.Stream(auth=tweepy_api.auth, listener=stream_listener,
