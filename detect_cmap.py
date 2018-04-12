@@ -15,6 +15,8 @@ try:
     from sklearn.neighbors import NearestNeighbors
 
     import skimage.io
+    import matplotlib as mpl
+    mpl.rcParams['image.lut'] = 2048
     import matplotlib.pyplot as plt
     from colorspacious import cspace_convert
 except:
@@ -97,7 +99,7 @@ cmap_names = [('Perceptually Uniform Sequential', [
 # don't keep grey colormaps
 drop_maps = ['Greys', 'binary', 'gist_yarg', 'gist_gray', 'gray']
 
-def build_cmap_knn(n=256):
+def build_cmap_knn(n=2048):
     """Builds a nearest neighbor graph for each colormap in matplotlib
     """
     # matplotlib.cm.ScalarMappable(cmap=plt.get_cmap('jet')).to_rgba([.1, 0.5, .9], alpha=False, bytes=True)
@@ -154,7 +156,7 @@ def find_cm_dists(df, max_diff=1.0):
         cm_colors = np.unique(idx)
 
         cm_stats.loc[cm_name, ['pct_cm', 'pct_page']] = [
-            cm_colors.size / 256,
+            cm_colors.size / 2048,
             idx.size / df.shape[0]
         ]
 
