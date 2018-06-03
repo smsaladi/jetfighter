@@ -1,7 +1,45 @@
+table {
+    margin:auto;
+    width: 90%;
+    max-width: 800px;
+    display: block;
+}
+
 tr.detected {
     color: #8e0152;
+    background-color: #f2f2f2;
 }
 
 tr.notdetected {
     color: #276419;
+    background-color: #f2f2f2;
+}
+
+/* tr:nth-child(even) {background-color: #f2f2f2;} */
+
+/* tr:hover {background-color: #f5f5f5;} */
+
+.btn-outline-success,
+.btn-outline-success:active,
+.btn-outline-success:visited,
+.btn-outline-success:focus {
+    border-color: #276419;
+    color: #276419;
+}
+.btn-outline-success:hover {
+    background-color: #276419;
+    color: white;
+}
+
+
+.btn-outline-danger,
+.btn-outline-danger:active,
+.btn-outline-danger:visited,
+.btn-outline-danger:focus {
+    border-color: #8e0152;
+    color: #8e0152;
+}
+.btn-outline-danger:hover {
+    background-color: #8e0152;
+    color: white;
 }

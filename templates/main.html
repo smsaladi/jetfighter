@@ -18,7 +18,7 @@
     <link rel="shortcut icon" href="//www.caltech.edu/sites/all/themes/caltech_mte/favicon.ico" type="image/vnd.microsoft.icon">
 
     <!-- Bootstrap CSS -->
-    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+    <link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
     <link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" integrity="sha384-wvfXpqpZZVQGK6TAh5PVlGOfQNHSoD2xbE+QkPxCAFlNEevoEH3Sl0sibVcOQVnN" crossorigin="anonymous">
 
     <link rel="stylesheet" href="//cdn.datatables.net/1.10.16/css/dataTables.bootstrap4.min.css" crossorigin="anonymous">
@@ -42,15 +42,36 @@
   <style>.github-corner:hover .octo-arm{animation:octocat-wave 560ms ease-in-out}@keyframes octocat-wave{0%,100%{transform:rotate(0)}20%,60%{transform:rotate(-25deg)}40%,80%{transform:rotate(10deg)}}@media (max-width:500px){.github-corner:hover .octo-arm{animation:none}.github-corner .octo-arm{animation:octocat-wave 560ms ease-in-out}}
   </style>
 
-<div max-width="1200px">
+<div class="container-fluid">
 
 <h2>Fighting against Rainbow Colormaps everywhere!</h2>
 
 {% block content %}
 
-<table>
+</br>
+
+<div class="row">
+<div class="col">
+
+    <label>Toggle Display</label>
+    </br>
+    <a href="/" class="btn btn-outline-primary" role="button">All</a>
+    <a href="?categories=1" class="btn btn-outline-danger" role="button">Only detected</a>
+    <a href="?categories=0" class="btn btn-outline-success" role="button">Only not detected</a>
+    <a href="?categories=0,1" class="btn btn-outline-primary" role="button">Only run</a>
+
+</div>
+</div>
+
+</br>
+
+<div class="row">
+<div class="col">
+
+
+<table class="table display">
   <thead>
-  <tr>
+  <tr class="text-center">
     <th>Title (<a href="https://www.biorxiv.org">Paper Link</a>)</th>
     <th>View Results</th>
   </tr>
@@ -94,4 +115,16 @@ $(document).ready( function () {
         "pageLength" : 50
     });
 } );
+
+// unused
+// remove rows without results
+function removeNotYetRun() {
+    $('.notyetrun').remove();
+    this.disabled=true;
+}
+// remove rows with negative results
+function removeNotDetected() {
+    $('.notdetected').remove();
+    this.disabled=true;
+}
 </script>

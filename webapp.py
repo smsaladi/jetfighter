@@ -6,6 +6,7 @@ import os.path
 import re
 import tempfile
 
+import flask
 from flask import Flask, render_template
 from flask_rq2 import RQ
 from flask_mail import Message
@@ -77,7 +78,15 @@ tweepy_api = tweepy.API(tweepy_auth)
 def webapp():
     """Renders the website with current results
     """
+
+    cats = flask.request.args.get('categories')
+    if cats:
+        cats = [int(x) for x in cats.split(',')]
+    else:
+        cats = [-1, 0, 1]
+
     papers = (Biorxiv.query
+                     .filter(Biorxiv.parse_status.in_(cats))
                      .order_by(desc(Biorxiv.created))
                      .limit(500)
                      .all())
