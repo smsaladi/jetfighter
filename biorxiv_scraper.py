@@ -25,7 +25,7 @@ def find_authors(code):
     """Retrieves page and captures author emails as list of strings
     """
     url = baseurl(code) + '.article-info'
-    page = requests.get(url)
+    page = requests.get(url, timeout=60)
     soup = BeautifulSoup(page.text, 'lxml')
 
     addr = soup(text=re.compile('\{at\}'))
@@ -39,7 +39,7 @@ def find_authors(code):
 
     return dict(corr=corr, all=list(set(addr)))
 
-def download_paper(code, outdir, timeout=10, debug=False):
+def download_paper(code, outdir, timeout=60, debug=False):
     """Downloads paper and returns filename
     """
     url = baseurl(code) + '.pdf'
