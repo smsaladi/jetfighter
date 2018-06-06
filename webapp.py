@@ -114,7 +114,7 @@ def do_admin_login():
             return flask.redirect('/')
         return flask.render_template('admin.html')
 
-    if flask.request.form['password'] == app.config('WEB_PASSWORD'):
+    if flask.request.form['password'] == app.config['WEB_PASSWORD']:
         flask.session['logged_in'] = True
     else:
         flask.flash('wrong password!')
