@@ -4,6 +4,7 @@
 import os
 import os.path
 import re
+import math
 import tempfile
 
 import flask
@@ -22,7 +23,7 @@ import pytest
 from models import db, Biorxiv, Test
 from twitter_listener import StreamListener
 from biorxiv_scraper import find_authors, download_paper
-from detect_cmap import detect_rainbow_from_file
+from detect_cmap import convert_to_img, detect_rainbow_from_file
 
 import utils
 
@@ -88,22 +89,73 @@ def home():
                      .limit(500)
                      .all())
 
-    if flask.session.get('logged_in'):
-        # admin view
-        return flask.render_template('main.html', papers=papers)
-    else:
-        return flask.render_template('main.html', papers=papers)
+    rerun = flask.request.args.get('rerun')
+    if rerun:
+        if flask.session.get('logged_in'):
+            if rerun == 'all':
+                jobs_queued = 0
+                for p_obj in papers:
+                    process_paper.queue(p_obj)
+                    jobs_queued += 1
+                flask.flash("{} jobs have been queued. "
+                            "Make sure rq workers are running".format(jobs_queued))
+            else:
+                flask.flash("Sorry, only rerun='all' is implemented right now")
+        else:
+            flask.flash("Sorry, you need to login to do that!")
+
+    return flask.render_template('main.html', papers=papers)
 
 @app.route('/result/<string:paper_id>')
-def show_results(paper_id):
+def show_results(paper_id, prepost=1, maxshow=10):
     """Have a buttons to resubmit job, modify email, and queue for send now/later
     """
     record = Biorxiv.query.filter_by(id=paper_id).first()
     if not record:
         return render_template('result.html', table='Paper not found')
-    #     testq = rq.Queue('testq', async=False)
     html = record.parse_data.to_html(bold_rows=False, index=False, border=0)
-    return flask.render_template('result.html', table=html)
+    pages = record.pages
+
+    # find pages before and after (requested or default)
+    try:
+        prepost = math.fabs(int(flask.request.args.get('prepost')))
+    except:
+        pass
+
+    # need to somehow keep information the pages being shown
+    show_pgs = set()
+    for i, num in enumerate(pages):
+        # if number of pages to go + current show pages is greater than maxshow,
+        # then don't add prepost
+        if len(show_pgs) + len(pages) - i + 1 < maxshow:
+            show_pgs.update(range(num-prepost, num+prepost))
+        else:
+            show_pgs.update(num)
+        # if we exceed maxshow, then no more
+        if len(show_pgs) > maxshow:
+            break
+
+
+    # download and convert paper to images
+    # delete those pages that aren't shown
+    pdf_fn = "static/previews/{}.pdf".format(paper_id)
+    if not os.path.exists(pdf_fn):
+        pdf_fn = download_paper(paper_id, "static/previews/")
+
+    show_fn = []
+    # pdftoppm -jpeg -jpegopt quality=75,progressive=y -scale-to 350
+    for pg_fn in convert_to_img(pdf_fn, outdir='static/previews/', format='jpeg',
+        other_opt=['-jpegopt', 'quality=50,progressive=y', '-scale-to', '350']):
+        pg_num = pg_fn.rsplit('-', maxsplit=1)[1].split('.')[0]
+        if int(pg_num) in show_pgs:
+            show_fn.append(flask.url_for('static', filename=pg_fn.replace('static/', '')))
+        #else:
+        #    os.unlink(pg_fn)
+
+    # os.unlink(pdf_fn)
+
+    # display images
+    return flask.render_template('result.html', imgs=show_fn, table=html)
 
 
 @app.route('/admin', methods=['GET', 'POST'])
@@ -240,9 +292,12 @@ def process_paper(obj):
 
     with tempfile.TemporaryDirectory() as td:
         fn = download_paper(obj.id, outdir=td)
-        obj.parse_status, obj.parse_data = detect_rainbow_from_file(fn)
-        if obj.parse_status:
+        obj.pages, obj.parse_data = detect_rainbow_from_file(fn)
+        if len(obj.pages) > 0:
+            obj.parse_status = 1
             obj.author_contact = find_authors(obj.id)
+        else:
+            obj.parse_status = 0
         db.session.merge(obj)
         db.session.commit()
 

@@ -15,6 +15,7 @@ class Biorxiv(db.Model):
     title           = db.Column(db.String)
     parse_status    = db.Column(db.Integer)
     _parse_data     = db.Column('parse_data', db.String)
+    _pages          = db.Column('pages', db.String)
     _author_contact = db.Column('author_contact', db.String)
     email_sent      = db.Column(db.Integer)
 
@@ -25,6 +26,14 @@ class Biorxiv(db.Model):
     @parse_data.setter
     def parse_data(self, df):
         self._parse_data = df.reset_index().to_json()
+
+    @hybrid_property
+    def pages(self):
+        return json.loads(self._pages)
+
+    @pages.setter
+    def pages(self, lst):
+        self._pages = json.dumps(lst)
 
     @hybrid_property
     def author_contact(self):

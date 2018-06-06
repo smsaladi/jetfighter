@@ -171,16 +171,20 @@ def find_cm_dists(df, max_diff=1.0):
     return cm_stats
 
 
-def detect_rainbow_from_colors(df_cmap):
-    """Returns a tuple of colormap details as well as final determination
+def detect_rainbow_from_colors(df_cmap, cm_thresh=0.5):
+    """Returns a tuple of pages determined to have rainbow and
+    results of colormap detection
     """
     rainbow_maps = ['flag', 'prism', 'hsv', 'gist_rainbow',
-        'rainbow', 'nipy_spectral', 'gist_ncar']
+        'rainbow', 'nipy_spectral', 'gist_ncar', 'jet']
 
-    df_cmap = df_cmap[df_cmap['pct_cm'] > 0.5]
-    has_rainbow = df_cmap.index.get_level_values('cm').isin(rainbow_maps).any()
-
-    return has_rainbow.item(), df_cmap
+    df_cmap = df_cmap[df_cmap['pct_cm'] > cm_thresh]
+    df_rainbow = df_cmap[df_cmap.index.get_level_values('cm').isin(rainbow_maps)]
+    if df_rainbow.size == 0:
+        return [], df_cmap
+    pgs_w_rainbow = df_rainbow.index.get_level_values('fn')
+    pgs_w_rainbow = pgs_w_rainbow.str.rsplit('-', 1).str[1].astype(int).unique()
+    return pgs_w_rainbow.tolist(), df_cmap
 
 
 def test_detect_rainbow_from_file():

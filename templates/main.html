@@ -75,6 +75,10 @@
   <a href="?categories=0" class="btn btn-outline-success" role="button">Only not detected</a>
   <a href="?categories=0,1" class="btn btn-outline-primary" role="button">Only run</a>
 
+  {% if session['logged_in'] %}
+  <a href="?rerun=all" class="btn btn-outline-primary" role="button">Rerun all</a>
+  {% endif %}
+
 </div>
 </div>
 
