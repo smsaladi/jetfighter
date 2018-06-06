@@ -122,18 +122,22 @@ def show_results(paper_id, prepost=1, maxshow=10):
     except:
         pass
 
-    # need to somehow keep information the pages being shown
-    show_pgs = set()
-    for i, num in enumerate(pages):
-        # if number of pages to go + current show pages is greater than maxshow,
-        # then don't add prepost
-        if len(show_pgs) + len(pages) - i + 1 < maxshow:
-            show_pgs.update(range(num-prepost, num+prepost))
-        else:
-            show_pgs.update(num)
-        # if we exceed maxshow, then no more
-        if len(show_pgs) > maxshow:
-            break
+    if len(pages) > 0:
+        # need to somehow keep information the pages being shown
+        show_pgs = set()
+        for i, num in enumerate(pages):
+            # if number of pages to go + current show pages is greater than maxshow,
+            # then don't add prepost
+            if len(show_pgs) + len(pages) - i + 1 < maxshow:
+                show_pgs.update(range(num-prepost, num+prepost))
+            else:
+                show_pgs.add(num)
+            # if we exceed maxshow, then no more
+            if len(show_pgs) > maxshow:
+                break
+    else:
+        show_pgs = set(range(1, maxshow + 1))
+
 
 
     # download and convert paper to images
