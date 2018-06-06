@@ -10,6 +10,8 @@ import flask
 from flask import Flask, render_template
 from flask_rq2 import RQ
 from flask_mail import Message
+from flask_wtf.csrf import CSRFProtect, CSRFError
+
 from sqlalchemy import desc
 
 import click
@@ -55,10 +57,12 @@ app.config['MAIL_DEFAULT_SENDER'] = os.environ['MAIL_DEFAULT_SENDER'].replace("'
 # 30 messages per minute rate limit
 app.config['MAIL_MAX_EMAILS'] = 30
 
-app.config['WEB_PASSWORD'] = os.environ['WEB_PASSWORD']
-
 app.config['DEBUG'] = os.environ.get('DEBUG')
 
+app.config['WEB_PASSWORD'] = os.environ['WEB_PASSWORD']
+
+app.config['SECRET_KEY'] = os.environ['SECRET_KEY']
+csrf = CSRFProtect(app)
 
 tweepy_auth = tweepy.OAuthHandler(
     app.config['TWITTER_APP_KEY'], app.config['TWITTER_APP_SECRET'])
@@ -68,7 +72,7 @@ tweepy_api = tweepy.API(tweepy_auth)
 
 
 @app.route('/')
-def webapp():
+def home():
     """Renders the website with current results
     """
 
@@ -83,7 +87,12 @@ def webapp():
                      .order_by(desc(Biorxiv.created))
                      .limit(500)
                      .all())
-    return render_template('main.html', papers=papers)
+
+    if flask.session.get('logged_in'):
+        # admin view
+        return flask.render_template('main.html', papers=papers)
+    else:
+        return flask.render_template('main.html', papers=papers)
 
 @app.route('/result/<string:paper_id>')
 def show_results(paper_id):
@@ -94,14 +103,37 @@ def show_results(paper_id):
         return render_template('result.html', table='Paper not found')
     #     testq = rq.Queue('testq', async=False)
     html = record.parse_data.to_html(bold_rows=False, index=False, border=0)
-    return render_template('result.html', table=html)
+    return flask.render_template('result.html', table=html)
 
 
-def webauth():
-    """Allows for login support
-    """
-    return render_template('auth.html')
+@app.route('/admin', methods=['GET', 'POST'])
+def do_admin_login():
+    if flask.request.method == 'GET':
+        if flask.session.get('logged_in'):
+            flask.flash('You are already logged in!')
+            return flask.redirect('/')
+        return flask.render_template('admin.html')
 
+    if flask.request.form['password'] == app.config('WEB_PASSWORD'):
+        flask.session['logged_in'] = True
+    else:
+        flask.flash('wrong password!')
+        return flask.render_template('admin.html')
+
+    return flask.redirect('/')
+
+@app.route('/logout', methods=['GET'])
+def logout():
+    if flask.session.get('logged_in'):
+        flask.session['logged_in'] = False
+    else:
+        flask.flash("Not logged in!")
+    return flask.redirect('/')
+
+@app.errorhandler(CSRFError)
+def handle_csrf_error(e):
+    flask.flash('CSRF Error. Try again?')
+    return flask.redirect('/admin')
 
 def send_email():
     """Provides html snippet for sending email

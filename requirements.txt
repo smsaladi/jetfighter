@@ -5,6 +5,7 @@ Flask-SQLAlchemy
 Flask-RQ2
 Flask-Mail
 Flask-table
+flask-wtf
 
 pymysql
 

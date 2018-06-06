@@ -46,6 +46,21 @@
 
 <h2>Fighting against Rainbow Colormaps everywhere!</h2>
 
+
+{% with messages = get_flashed_messages() %}
+  {% if messages %}
+  <div class="row justify-content-center">
+  <div class="col col-lg-8 text-center">
+    {% for message in messages %}
+      <div class="alert alert-warning" role="alert">
+        {{ message }}
+      </div>
+    {% endfor %}
+  </div>
+  </div>
+  {% endif %}
+{% endwith %}
+
 {% block content %}
 
 </br>
