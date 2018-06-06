@@ -1,18 +1,18 @@
 table {
-    margin:auto;
-    width: 90%;
-    max-width: 800px;
-    display: block;
+  margin:auto;
+  width: 90%;
+  max-width: 800px;
+  display: block;
 }
 
 tr.detected {
-    color: #8e0152;
-    background-color: #f2f2f2;
+  color: #8e0152;
+  background-color: #f2f2f2;
 }
 
 tr.notdetected {
-    color: #276419;
-    background-color: #f2f2f2;
+  color: #276419;
+  background-color: #f2f2f2;
 }
 
 /* tr:nth-child(even) {background-color: #f2f2f2;} */
@@ -23,12 +23,12 @@ tr.notdetected {
 .btn-outline-success:active,
 .btn-outline-success:visited,
 .btn-outline-success:focus {
-    border-color: #276419;
-    color: #276419;
+  border-color: #276419;
+  color: #276419;
 }
 .btn-outline-success:hover {
-    background-color: #276419;
-    color: white;
+  background-color: #276419;
+  color: white;
 }
 
 
@@ -36,10 +36,10 @@ tr.notdetected {
 .btn-outline-danger:active,
 .btn-outline-danger:visited,
 .btn-outline-danger:focus {
-    border-color: #8e0152;
-    color: #8e0152;
+  border-color: #8e0152;
+  color: #8e0152;
 }
 .btn-outline-danger:hover {
-    background-color: #8e0152;
-    color: white;
+  background-color: #8e0152;
+  color: white;
 }

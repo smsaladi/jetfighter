@@ -1,31 +1,31 @@
 <!doctype html>
 <html lang="en">
-  <head>
-    <!-- Global site tag (gtag.js) - Google Analytics -->
-    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-103013509-2"></script>
-    <script>
-    window.dataLayer = window.dataLayer || [];
-    function gtag(){dataLayer.push(arguments);}
-    gtag('js', new Date());
+<head>
+  <!-- Global site tag (gtag.js) - Google Analytics -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=UA-103013509-2"></script>
+  <script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
 
-    gtag('config', 'UA-103013509-2');
-    </script>
+  gtag('config', 'UA-103013509-2');
+  </script>
 
-    <!-- Required meta tags -->
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <!-- Required meta tags -->
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 
-    <link rel="shortcut icon" href="//www.caltech.edu/sites/all/themes/caltech_mte/favicon.ico" type="image/vnd.microsoft.icon">
+  <link rel="shortcut icon" href="//www.caltech.edu/sites/all/themes/caltech_mte/favicon.ico" type="image/vnd.microsoft.icon">
 
-    <!-- Bootstrap CSS -->
-    <link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
-    <link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" integrity="sha384-wvfXpqpZZVQGK6TAh5PVlGOfQNHSoD2xbE+QkPxCAFlNEevoEH3Sl0sibVcOQVnN" crossorigin="anonymous">
+  <!-- Bootstrap CSS -->
+  <link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+  <link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" integrity="sha384-wvfXpqpZZVQGK6TAh5PVlGOfQNHSoD2xbE+QkPxCAFlNEevoEH3Sl0sibVcOQVnN" crossorigin="anonymous">
 
-    <link rel="stylesheet" href="//cdn.datatables.net/1.10.16/css/dataTables.bootstrap4.min.css" crossorigin="anonymous">
+  <link rel="stylesheet" href="//cdn.datatables.net/1.10.16/css/dataTables.bootstrap4.min.css" crossorigin="anonymous">
 
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 
-    <title>Fighting the Jet</title>
+  <title>Fighting the Jet</title>
 
 </head>
 
@@ -68,12 +68,12 @@
 <div class="row">
 <div class="col">
 
-    <label>Toggle Display</label>
-    </br>
-    <a href="/" class="btn btn-outline-primary" role="button">All</a>
-    <a href="?categories=1" class="btn btn-outline-danger" role="button">Only detected</a>
-    <a href="?categories=0" class="btn btn-outline-success" role="button">Only not detected</a>
-    <a href="?categories=0,1" class="btn btn-outline-primary" role="button">Only run</a>
+  <label>Toggle Display</label>
+  </br>
+  <a href="/" class="btn btn-outline-primary" role="button">All</a>
+  <a href="?categories=1" class="btn btn-outline-danger" role="button">Only detected</a>
+  <a href="?categories=0" class="btn btn-outline-success" role="button">Only not detected</a>
+  <a href="?categories=0,1" class="btn btn-outline-primary" role="button">Only run</a>
 
 </div>
 </div>
@@ -101,16 +101,23 @@
       <tr class="notyetrun">
       {% endif %}
         <td>
-            {{ p.title }}
-            <a href="{{ p.url }}">
-                <i class="fa fa-file-text" alt="Link to paper"></i>
-            </a>
+          {{ p.title }}
+          <a href="{{ p.url }}">
+            <i class="fa fa-file-text" alt="Link to paper"></i>
+          </a>
         </td>
-        <td><a href="/result/{{ p.id }}">Result</a></td>
+        <td class="text-center">
+          {% if p.parse_status is not none %}
+            <a href="/result/{{ p.id }}">Result</a>
+          {% endif %}
+        </td>
       </tr>
   {% endfor %}
   </tbody>
 </table>
+
+</div>
+</div>
 
 {% endblock %}
 
@@ -126,20 +133,20 @@
 
 <script>
 $(document).ready( function () {
-    $('table').DataTable({
-        "pageLength" : 50
-    });
+  $('table').DataTable({
+    "pageLength" : 50
+  });
 } );
 
 // unused
 // remove rows without results
 function removeNotYetRun() {
-    $('.notyetrun').remove();
-    this.disabled=true;
+  $('.notyetrun').remove();
+  this.disabled=true;
 }
 // remove rows with negative results
 function removeNotDetected() {
-    $('.notdetected').remove();
-    this.disabled=true;
+  $('.notdetected').remove();
+  this.disabled=true;
 }
 </script>
