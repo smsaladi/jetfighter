@@ -22,17 +22,10 @@ from twitter_listener import StreamListener
 from biorxiv_scraper import find_authors, download_paper
 from detect_cmap import detect_rainbow_from_file
 
-myloc = os.path.dirname(os.path.abspath(__file__))
+import utils
 
-# read vars into env if file exists
-envpath = os.path.join(myloc, ".env")
-if os.path.exists(envpath):
-    with open(envpath, "r") as fh:
-        for line in fh.readlines():
-            if '#' not in line and '=' in line:
-                key, val = line.strip().split('=', 1)
-                os.environ[key] = val
-
+# Reads env file into environment, if found
+_ = utils.read_env()
 
 app = Flask(__name__)
 
