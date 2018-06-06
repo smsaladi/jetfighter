@@ -21,7 +21,7 @@ except:
     print('Calculations will fail if this is a worker')
 
 
-def convert_to_img(fn, outdir=None):
+def convert_to_img(fn, format='png', other_opt=[], outdir=None):
     """Converts each page of the pdf to a png file.
         If `out` is None, make one for the meantime
     """
@@ -35,8 +35,16 @@ def convert_to_img(fn, outdir=None):
     basen = os.path.splitext(basen)[0]
     outpre = os.path.join(outdir, basen)
 
-    subprocess.check_call(['pdftoppm', '-png', fn, outpre])
-    for pg in glob.iglob(outpre + '*'):
+    #other_opt = ['-' + k, v for k, v in kwargs.items()]
+    if format == 'png':
+        ext = format
+    elif format == 'jpeg':
+        ext = 'jpg'
+    else:
+        raise ValueError("Only jpg, png supported by pdftoppm")
+
+    subprocess.check_call(['pdftoppm', '-' + format, *other_opt, fn, outpre])
+    for pg in glob.iglob(outpre + '*.' + ext):
         yield pg
 
     # If tempdir was created, then clean it up
