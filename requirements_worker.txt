@@ -1,11 +1,12 @@
 
-colorspacious
+numpy
+pandas
+matplotlib
 scipy
 scikit-learn
 scikit-image
-matplotlib
-numpy
-pandas
 
-BeautifulSoup4
+colorspacious
+
 lxml
+BeautifulSoup4

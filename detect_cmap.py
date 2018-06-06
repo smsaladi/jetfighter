@@ -188,8 +188,15 @@ def detect_rainbow_from_colors(df_cmap, cm_thresh=0.5):
 
 
 def test_detect_rainbow_from_file():
-    assert detect_rainbow_from_file('test/172627_short.pdf')
-    assert not detect_rainbow_from_file('test/197004.full.pdf')
+    pgs, _ = detect_rainbow_from_file('test/172627_short.pdf')
+    assert np.array_equal(pgs, [3, 7, 8, 9])
+    if 1 in pgs:
+        print("FYI, the jet image on page 1 is successfully detected."
+              "Change this assertion!")
+    else:
+        print("FYI, the jet image on page 1 isn't detected")
+    pgs, _ = detect_rainbow_from_file('test/197004.full.pdf')
+    assert pgs == []
 
 
 def detect_rainbow_from_file(fn, debug=False):

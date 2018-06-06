@@ -1,39 +1,61 @@
 # Adapted from https://conda.io/docs/user-guide/tasks/use-conda-with-travis-ci.html
-# cache:
-#   directories:
-#     - $HOME/.cache/pip
-#     - $HOME/miniconda
+# caching from https://github.com/theochem/qcgrids/issues/8
+before_cache:
+  - if ! [[ $TRAVIS_TAG ]]; then rm -rf $HOME/miniconda/conda-bld; fi
+  - rm -rf $HOME/miniconda/locks $HOME/miniconda/pkgs $HOME/miniconda/var $HOME/miniconda/conda-meta/history
 
-language: python
-python:
-  # We don't actually use the Travis Python, but this keeps it organized.
-  - "3.5"
-  # - "3.6"
+cache:
+  directories:
+    - $HOME/miniconda
+
+language: generic
+env:
+  - MYCONDAPY="3.5"
+  # - MYCONDAPY="3.6"
+
+before_install:
+  # Get miniconda. Take the right version, so re-installing python is hopefully not needed.
+  - if test -e $HOME/miniconda/bin; then
+      echo "miniconda already installed.";
+    else
+      echo "Installing miniconda.";
+      rm -rf $HOME/miniconda;
+      mkdir -p $HOME/download;
+      if [[ -d $HOME/download/miniconda.sh ]]; then rm -rf $HOME/download/miniconda.sh; fi;
+      if [ "${MYCONDAPY}" = "2.7" ]; then
+        if [ "${TRAVIS_OS_NAME}" = "linux" ]; then
+          wget https://repo.continuum.io/miniconda/Miniconda2-latest-Linux-x86_64.sh -O $HOME/download/miniconda.sh;
+        else
+          wget https://repo.continuum.io/miniconda/Miniconda2-latest-MacOSX-x86_64.sh -O $HOME/download/miniconda.sh;
+        fi;
+      else
+        if [ "${TRAVIS_OS_NAME}" = "linux" ]; then
+          wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O $HOME/download/miniconda.sh;
+        else
+          wget https://repo.continuum.io/miniconda/Miniconda3-latest-MacOSX-x86_64.sh -O $HOME/download/miniconda.sh;
+        fi;
+      fi;
+      bash $HOME/download/miniconda.sh -b -p $HOME/miniconda;
+    fi
 
 install:
   - sudo apt-get update
-  - sed 's/#.*//' Aptfile | xargs sudo apt-get install
-
-  - wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh;
-  - bash miniconda.sh -b -p $HOME/miniconda
-  - export PATH="$HOME/miniconda/bin:$PATH"
+  - egrep -v '#|^$' Aptfile | xargs sudo apt-get install
+  - source $HOME/miniconda/bin/activate
   - hash -r
   - conda config --set always_yes yes --set changeps1 no
   - conda update -q conda
   # Useful for debugging any issues with conda
   - conda info -a
 
-  # Replace dep1 dep2 ... with your dependencies
-  - conda create -q -n test-environment python=$TRAVIS_PYTHON_VERSION
-  - source activate test-environment
-
   # https://stackoverflow.com/a/38609653
-  - while read reqpkg; do conda install --yes $reqpkg || pip install $reqpkg; done < requirements_worker.txt
-  - while read reqpkg; do conda install --yes $reqpkg || pip install $reqpkg; done < requirements.txt
+  - egrep -v '#|^$' requirements_worker.txt | while read reqpkg; do conda install --yes $reqpkg || pip install $reqpkg; done
+  - egrep -v '#|^$' requirements.txt | while read reqpkg; do conda install --yes $reqpkg || pip install $reqpkg; done
 
   # Install this code
-  - pip install -e .
+  # - pip install -e .
 
 script:
-  - py.test -v --color=yes --exitfirst --showlocals
+  # just testing detection code for now (not webapp stuff yet)
+  - py.test -v --color=yes --exitfirst --showlocals --cov=./ biorxiv_scraper.py detect_cmap.py
   - codecov
