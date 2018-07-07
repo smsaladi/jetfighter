@@ -8,6 +8,9 @@ import math
 import tempfile
 import base64
 
+import gevent.monkey
+gevent.monkey.patch_all()
+
 import flask
 from flask import Flask, render_template
 from flask_rq2 import RQ
@@ -105,7 +108,7 @@ def home():
         else:
             flask.flash("Sorry, you need to login to do that!")
 
-    return flask.render_template('main.html', papers=papers)
+    return flask.render_template('main.html', app=app, papers=papers)
 
 @app.route('/pages/<string:paper_id>')
 def pages(paper_id, prepost=1, maxshow=10):

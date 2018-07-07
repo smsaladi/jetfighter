@@ -1,4 +1,5 @@
 gunicorn
+gevent
 
 flask
 Flask-SQLAlchemy
