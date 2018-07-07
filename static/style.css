@@ -43,3 +43,24 @@ tr.notdetected {
   background-color: #8e0152;
   color: white;
 }
+
+.img-preview-detected {
+  box-shadow: inset 0 0 8px 1px #8e0152;
+}
+
+.img-preview-notdetected {
+  box-shadow: inset 0 0 8px 1px #276419;
+}
+
+
+td.details-control {
+  background: url('https://datatables.net/examples/resources/details_open.png') no-repeat center center;
+  cursor: pointer;
+}
+
+tr.shown td.details-control {
+  background: url('https://datatables.net/examples/resources/details_close.png') no-repeat center center;
+}
+
+# change to font awesome icon
+# https://stackoverflow.com/questions/14736496/use-font-awesome-icons-in-css

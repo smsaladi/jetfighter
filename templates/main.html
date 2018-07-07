@@ -91,18 +91,22 @@
 <table class="table display">
   <thead>
   <tr class="text-center">
-    <th>Title (<a href="https://www.biorxiv.org">Paper Link</a>)</th>
     <th>View Results</th>
+    <th>Title (<a href="https://www.biorxiv.org">Paper Link</a>)</th>
+    <th>Authors notified?</th>
   </tr>
   </thead>
   <tbody>
   {% for p in papers %}
       {% if p.parse_status == 1 %}
-      <tr class="detected">
+      <tr class="detected" id="{{ p.id }}">
+        <td class="details-control"></td>
       {% elif p.parse_status == 0 %}
-      <tr class="notdetected">
+      <tr class="notdetected" id="{{ p.id }}">
+        <td class="details-control"></td>
       {% else %}
-      <tr class="notyetrun">
+      <tr class="notyetrun" id="{{ p.id }}">
+        <td></td>
       {% endif %}
         <td>
           {{ p.title }}
@@ -110,9 +114,13 @@
             <i class="fa fa-file-text" alt="Link to paper"></i>
           </a>
         </td>
-        <td class="text-center">
-          {% if p.parse_status is not none %}
-            <a href="/result/{{ p.id }}">Result</a>
+        <td class="text-center" style="color:black">
+          {% if p.parse_status == 1 %}
+            {% if p.email_sent %}
+            Yes
+            {% else %}
+            No
+            {% endif %}
           {% endif %}
         </td>
       </tr>
@@ -127,20 +135,151 @@
 
 </div>
 
+
+
 </body>
 
-<script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN" crossorigin="anonymous"></script>
+<div id="infotemplate">
+  <div class="row paperpreview">
+
+  </div>
+</div>
+
+<div id="pgpreviewtempl" class="col-sm-2">
+  <a href="xxx" target="_blank">
+    <img src="" class="img-fluid img-thumbnail img-preview-detected mx-auto"
+      data-toggle="tooltip" data-placement="top" title="Navigate to pdf of page(new window)"/>
+  </a>
+</div>
+
+
+{% if session['logged_in'] %}
+<div id="emailtemplate">
+<form action="/email" method="POST" role="form" class="form-horizontal">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+  <div class="form-group">
+    <label for="fromInput1">From</label>
+    <input type="email" name="from" class="form-control" id="fromInput1" value="{{ app.config['MAIL_DEFAULT_SENDER'] }}" required>
+  </div>
+  <div class="form-group">
+      <label for="ccInput1">CC</label>
+      <input type="email" name="cc" class="form-control" id="ccInput1" placeholder="Enter any emails to be cc'ed">
+  </div>
+  <div class="form-group">
+      <label for="messageTextarea">Example textarea</label>
+      <textarea class="form-control" name="message" id="messageTextarea" rows="5" required></textarea>
+  </div>
+  <button type="submit" class="btn btn-primary">Send</button>
+</form>
+</div>
+{% endif %}
+
+</div>
+
+
+
+<script
+  src="https://code.jquery.com/jquery-3.3.1.min.js"
+  integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8="
+  crossorigin="anonymous"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>
 <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>
 <script src="//cdn.datatables.net/1.10.16/js/jquery.dataTables.min.js"></script>
 <script src="//cdn.datatables.net/1.10.16/js/dataTables.bootstrap4.min.js"></script>
 
 <script>
-$(document).ready( function () {
-  $('table').DataTable({
-    "pageLength" : 50
+
+// Initiate conversion of images.
+// Separate call for which pages and retrieving images
+function retrieve_previews(id) {
+  info = $('#infotemplate').clone()[0];
+  info.removeAttribute('id');
+  p_preview = $(info).find(".paperpreview")[0];
+
+  // Retrieve image numbers along with per-page parse statuses
+  // add placeholders on the page until finally retrieved
+  function insertPage(id, pg, i) {
+      i.src = '';
+      i.className += " fa fa-circle-o-notch fa-spin";
+      function replacePagePlaceholder(data) {
+        i.src = data;
+        i.classList.remove('fa');
+        i.classList.remove('fa-circle-o-notch');
+        i.classList.remove('fa-spin');
+        console.log(i);
+      }
+      $.ajax({
+        url : "/preview/" + id + "/" + pg,
+        dataType: 'json',
+      }).done(replacePagePlaceholder);
+  }
+
+  function insertPages(pgs) {
+    Object.keys(pgs).map(function(pg, index) {
+      status = pgs[pg];
+      console.log(pg, status);
+      pvt = $('#pgpreviewtempl').clone()[0];
+      console.log(pvt);
+      pvt.removeAttribute('id');
+
+      // call to retrieve page and insert it
+      p_preview.appendChild(pvt);
+      i = $(pvt).find("img")[0];
+      console.log(i.className)
+
+      if (status == "true") {
+        i.classList.add("img-preview-detected");
+      } else {
+        i.classList.add("img-preview-notdetected");
+      }
+      console.log(i.className)
+      insertPage(id, pg, i);
+    });
+  }
+
+  console.log("/pages/" + id)
+  // get page numbers to show and initiate callback
+  $.ajax({
+    url : "/pages/" + id,
+    dataType: 'json'
+  }).done(insertPages);
+
+  return info;
+}
+
+$(document).ready(function() {
+  var table = $('table').DataTable( {
+    columns: [
+        { name: 'expand' },
+        { name: 'title' },
+        { name: 'authors' },
+    ],
+    'columnDefs' : [
+      { 'orderable': false, 'targets': [0] }
+      ],
+      "pageLength" : 50
   });
-} );
+
+  // Add event listener for opening and closing details
+  $('table').on('click', 'td.details-control', function () {
+    var tr = $(this).closest('tr');
+    var row = table.row( tr );
+    console.log(row);
+    if ( row.child.isShown() ) {
+      row.child.hide();
+      tr.removeClass('shown');
+    }
+    else {
+      if (!row.child()) {
+        prev = retrieve_previews( row.data().DT_RowId );
+        row.child(prev);
+      }
+      row.child.show();
+      tr.addClass('shown');
+    }
+  });
+});
+
 
 // unused
 // remove rows without results
@@ -153,4 +292,12 @@ function removeNotDetected() {
   $('.notdetected').remove();
   this.disabled=true;
 }
+
+// For hover-over tooltip
+$(document).ready(function(){
+    $('[data-toggle="tooltip"]').tooltip();
+});
 </script>
+
+
+</html>

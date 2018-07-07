@@ -6,6 +6,7 @@ import os.path
 import re
 import math
 import tempfile
+import base64
 
 import flask
 from flask import Flask, render_template
@@ -106,6 +107,71 @@ def home():
 
     return flask.render_template('main.html', papers=papers)
 
+@app.route('/pages/<string:paper_id>')
+def pages(paper_id, prepost=1, maxshow=10):
+    """Returns base64 encoded image intended for ajax calls only
+    1-index I think...
+    """
+    record = Biorxiv.query.filter_by(id=paper_id).first()
+    if not record:
+        return flask.jsonify({})
+
+    pages = record.pages
+
+    # find pages before and after (requested or default)
+    try:
+        prepost = math.fabs(int(flask.request.args.get('prepost')))
+    except:
+        pass
+
+    # find pages before and after (requested or default)
+    try:
+        maxshow = math.fabs(int(flask.request.args.get('maxshow')))
+    except:
+        pass
+
+    show_pgs = {}
+    if pages:
+        # add all detected pages up to maxshow count
+        show_pgs = {i:True for i in pages[:maxshow]}
+        # pad with undetected pages
+        for i in pages:
+            for j in range(i - prepost, i + prepost + 1):
+                if len(show_pgs) < maxshow:
+                    if j not in pages:
+                        show_pgs[j] = False
+                else:
+                    return flask.jsonify(show_pgs)
+    else:
+        show_pgs = {i:False for i in range(1, maxshow + 1)}
+
+    return flask.jsonify(show_pgs)
+
+@app.route('/preview/<string:paper_id>/<int:pg>')
+def preview(paper_id, pg):
+    """Returns base64 encoded image intended for ajax calls only
+    """
+    img_data = None
+
+    # download and convert paper to images
+    # delete those pages that aren't shown
+    pdf_fn = "static/previews/{}.pdf".format(paper_id)
+    if not os.path.exists(pdf_fn):
+        pdf_fn = download_paper(paper_id, "static/previews/")
+
+    show_fn = []
+    for pg_fn in convert_to_img(pdf_fn, outdir='static/previews/', format='jpeg',
+        other_opt=['-f', str(pg), '-l', str(pg), '-jpegopt', 'quality=50,progressive=y', '-scale-to', '350']):
+        if re.match(".*\-0*{}".format(pg), pg_fn):
+            with open(pg_fn, "rb") as fh:
+                img_data = fh.read()
+            break
+
+    b64img = 'data:image/jpg;base64,' + base64.b64encode(img_data).decode("utf-8")
+
+    return flask.jsonify(b64img)
+# flask.render_template('preview_img.html', b64img=b64img)
+
 @app.route('/result/<string:paper_id>')
 def show_results(paper_id, prepost=1, maxshow=10):
     """Have a buttons to resubmit job, modify email, and queue for send now/later
@@ -138,8 +204,6 @@ def show_results(paper_id, prepost=1, maxshow=10):
     else:
         show_pgs = set(range(1, maxshow + 1))
 
-
-
     # download and convert paper to images
     # delete those pages that aren't shown
     pdf_fn = "static/previews/{}.pdf".format(paper_id)
@@ -161,43 +225,83 @@ def show_results(paper_id, prepost=1, maxshow=10):
     # display images
     return flask.render_template('result.html', imgs=show_fn, table=html)
 
+@app.route('/notify/<string:paper_id>', methods=['POST'])
+@app.route('/notify/<string:paper_id>/<int:force>', methods=['POST'])
+def notify_authors(paper_id, force=0):
+    if flask.session.get('logged_in'):
+        record = Biorxiv.query.filter_by(id=paper_id).first()
+        if not record:
+            return flask.jsonify(result=False, message="paper not found")
 
-@app.route('/admin', methods=['GET', 'POST'])
-def do_admin_login():
+        try:
+            corr = record.author_contact.get('corr')
+        except:
+            noemail = True
+
+        if noemail or corr is None or '@' not in corr:
+            return flask.jsonify(result=False,
+                message="mangled or missing email addresses")
+
+        if force != 1 and record.email_sent == 1:
+            return flask.jsonify(result=False,
+                message="email already sent. must use force=1 to send another")
+
+        if len(request.form['message']) < 50:
+            return flask.jsonify(result=False,
+                                 message="POST missing message")
+
+        msg = Message(
+            "Biorxiv Manuscript {}: Colormap suggestion".format(record.id),
+            sender="saladi@caltech.edu",
+            recipients=[corr])
+        msg.body = request.form['message']
+        mail.send(msg)
+
+        return flask.jsonify(result=True, message="successfully sent")
+    else:
+        return flask.jsonify(result=False, message="not logged in")
+
+@app.route('/rerun/<string:paper_id>', methods=['POST'])
+def rerun_web(paper_id):
+    if flask.session.get('logged_in'):
+        rec = Biorxiv.query.filter_by(id=paper_id).first()
+        if not rec:
+            return flask.jsonify(result=False, message="paper not found")
+        process_paper.queue(rec)
+        return flask.jsonify(result=True, message="successfully sent")
+    else:
+        return flask.jsonify(result=False, message="not logged in")
+
+@app.route('/login', methods=['GET', 'POST'])
+def admin_login():
     if flask.request.method == 'GET':
         if flask.session.get('logged_in'):
             flask.flash('You are already logged in!')
             return flask.redirect('/')
-        return flask.render_template('admin.html')
+        return flask.render_template('login.html')
 
     if flask.request.form['password'] == app.config['WEB_PASSWORD']:
         flask.session['logged_in'] = True
     else:
         flask.flash('wrong password!')
-        return flask.render_template('admin.html')
+        return flask.render_template('login.html')
 
     return flask.redirect('/')
 
 @app.route('/logout', methods=['GET'])
 def logout():
-    if flask.session.get('logged_in'):
-        flask.session['logged_in'] = False
+    logged_in = flask.session.get('logged_in')
+    flask.session.clear()
+    if logged_in:
+        flask.flash("You have been successfully logged out")
     else:
-        flask.flash("Not logged in!")
-    return flask.redirect('/')
+        flask.flash("Not logged in! (but the session has been cleared)")
+    return redirect('/')
 
 @app.errorhandler(CSRFError)
 def handle_csrf_error(e):
     flask.flash('CSRF Error. Try again?')
-    return flask.redirect('/admin')
-
-def send_email():
-    """Provides html snippet for sending email
-    """
-    msg = Message("Hello",
-                  sender="from@example.com",
-                  recipients=["to@example.com"])
-    return render_template('email.html')
+    return flask.redirect(flask.url_for('admin_login'))
 
 
 def parse_tweet(t, db=db, objclass=Biorxiv, verbose=True):
@@ -239,28 +343,30 @@ def parse_tweet(t, db=db, objclass=Biorxiv, verbose=True):
         title=title,
     )
 
-    db.session.merge(obj)
+    obj = db.session.merge(obj)
     db.session.commit()
 
-    process_paper.queue(obj)
+    # don't reprocess papers that have already been entered
+    if obj.title is None:
+        process_paper.queue(obj)
 
 
-@app.cli.command()
-@click.option('--test', is_flag=True)
-def monitor_biorxiv(test):
-    """Starts the twitter listener on the command line
-    """
-    if test:
-        filter_args = dict(track=['clinton', 'sanders'])
-        stream_listener = StreamListener(lambda t: parse_tweet(t, db=None))
-    else:
-        # user_id for 'biorxivpreprint'
-        filter_args = dict(follow=['1949132852'])
-        stream_listener = StreamListener(parse_tweet)
+# @app.cli.command()
+# @click.option('--test', is_flag=True)
+# def monitor_biorxiv(test):
+#     """Starts the twitter listener on the command line
+#     """
+#     if test:
+#         filter_args = dict(track=['clinton', 'sanders'])
+#         stream_listener = StreamListener(lambda t: parse_tweet(t, db=None))
+#     else:
+#         # user_id for 'biorxivpreprint'
+#         filter_args = dict(follow=['1949132852'])
+#         stream_listener = StreamListener(parse_tweet)
 
-    stream = tweepy.Stream(auth=tweepy_api.auth, listener=stream_listener,
-            trim_user='True', include_entities=True, tweet_mode='extended')
-    stream.filter(**filter_args)
+#     stream = tweepy.Stream(auth=tweepy_api.auth, listener=stream_listener,
+#             trim_user='True', include_entities=True, tweet_mode='extended')
+#     stream.filter(**filter_args)
 
 
 @app.cli.command()
@@ -340,3 +446,27 @@ def test_integration(test_setup_cleanup):
     assert set(authors['all']) == set([
         'o.borkowski@imperial.ac.uk', 'carlos.bricio@gmail.com',
         'g.stan@imperial.ac.uk', 't.ellis@imperial.ac.uk'])
+
+@app.cli.command()
+@click.argument('paper_id', required=False)
+def rerun(paper_id=None):
+    """Rerun some or all papers in database
+    """
+    n_queue = 0
+    if paper_id:
+        rec = Biorxiv.query.filter_by(id=paper_id).first()
+        if rec:
+            process_paper.queue(rec)
+            n_queue += 1
+        else:
+            print("paper_id {} not found".format(paper_id))
+    else:
+        for rec in Biorxiv.query.all():
+            process_paper.queue(rec)
+            n_queue += 1
+
+    print("Queued {} jobs".format(n_queue))
+    return
+
+if __name__ == "__main__":
+    app.run(debug=True, threaded=True, use_reloader=False)
