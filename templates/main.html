@@ -11,22 +11,52 @@
 
 {% block content %}
 
+<nav class="navbar navbar-expand-lg navbar-dark sticky-top bg-dark rounded-bottom" style="margin:0px; margin-bottom:20px;">
+  <a class="navbar-brand" href="#">Jet Fighting!</a>
 
-</br>
+  <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarText" aria-controls="navbarText" aria-expanded="false" aria-label="Toggle navigation">
+      <span class="navbar-toggler-icon"></span>
+  </button>
 
-<nav class="navbar navbar-dark sticky-top bg-dark" style="margin:0px">
-  <a class="navbar-brand" href="#">Fighting Rainbow Colormaps Everywhere!</a>
-  <a href="/" class="btn btn-outline-primary" role="button">All</a>
-  <a href="?categories=1" class="btn btn-outline-danger" role="button">Only detected</a>
-  <a href="?categories=0" class="btn btn-outline-success" role="button">Only not detected</a>
-  <a href="?categories=0,1" class="btn btn-outline-primary" role="button">Only run</a>
+  <div class="collapse navbar-collapse" id="navbarText">
+    <ul class="navbar-nav mr-auto nav-fill w-100">
+      <li class="navbar-text nav-item">
+          <a class="nav-link" href="/">All Manuscripts</a>
+        </li>
+        <li class="navbar-text nav-item">
+          <a class="nav-link" href="?categories=1">Manuscripts with rainbow detection
+            <i class="far fa-eye-slash"></i>
+          </a>
+        </li>
+        <li class="navbar-text nav-item">
+          <a class="nav-link" href="?categories=0">Manuscripts without detection
+              <i class="far fa-check-circle"></i>
+          </a>
+        </li>
+        <!-- <a class="nav-link" href="?categories=0,1">Only run</a> -->
+        <li class="navbar-text nav-item">
+          <input id="filterbox" class="form-control mr-sm-2" type="search" placeholder="Filter rows">
+        </li>
+        <li class="navbar-text nav-item">
+            <label data-toggle="tooltip" data-placement="top" title="Rows per page">
+              <select id="pagebox" name="jfTable_length" aria-controls="jfTable" class="form-control">
+                <option value="10">10</option>
+                <option value="25">25</option>
+                <option value="50">50</option>
+                <option value="100">100</option>
+              </select>
+            </label>
+        </li>
+    </ul>
+  </div>
+
 </nav>
 
 <div class="row justify-content-center">
 <div class="col" style="max-width: 1200px">
 
 
-<table class="table display">
+<table id="jfTable" class="table display">
   <thead>
   <tr class="text-center">
     <th>View Results</th>
@@ -115,9 +145,6 @@
 
 
 {% block custom_js %}
-<script src="//cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js"
-  integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q"
-  crossorigin="anonymous"></script>
 <script src="//cdn.datatables.net/1.10.16/js/jquery.dataTables.min.js"></script>
 <script src="//cdn.datatables.net/1.10.16/js/dataTables.bootstrap4.min.js"></script>
 
@@ -182,7 +209,7 @@ function retrieve_previews(id) {
 }
 
 $(document).ready(function() {
-  var table = $('table').DataTable( {
+  var table = $('#jfTable').DataTable( {
     columns: [
         { name: 'expand' },
         { name: 'title' },
@@ -191,8 +218,18 @@ $(document).ready(function() {
     'columnDefs' : [
       { 'orderable': false, 'targets': [0] }
       ],
-      "pageLength" : 50
+      "pageLength": 50,
+      "searching": false,
+      "lengthChange": false,
+      // "oLanguage": {
+      //   sLengthMenu: "_MENU_",
+      // },
+      "fnInitComplete" : function( oSettings, json ){
+        // $("#jfTable_length").detach().prependTo("#pagebox");
+        $('#pagebox').val(oSettings['_iDisplayLength']);
+      }
   });
+
 
   // Add event listener for opening and closing details
   $('table').on('click', 'td.details-control', function () {
@@ -212,6 +249,15 @@ $(document).ready(function() {
       tr.addClass('shown');
     }
   });
+
+  $("#filterbox").keyup(function() {
+    table.search(this.value).draw();
+  });
+
+  $('#pagebox').on("change", function () {
+    table.page.len(this.value).draw();
+  });
+
 });
 
 

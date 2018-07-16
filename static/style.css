@@ -1,8 +1,22 @@
+/* .navbar-nav > li{
+  padding-left: 10px;
+  padding-right: 10px;
+} */
+
 table {
-  margin:auto;
+  margin: auto;
   width: 90%;
   max-width: 800px;
   display: block;
+}
+
+#pagebox {
+  display: inline;
+}
+
+#jfTable_length {
+  /* display: inline; */
+  /* margin: 0; */
 }
 
 tr.detected {
