@@ -13,6 +13,8 @@ pymysql
 tweepy
 pandas
 
+portalocker
+
 pytest
 pytest-cov
 codecov

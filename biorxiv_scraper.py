@@ -8,6 +8,7 @@ import random
 import re
 
 import requests
+import portalocker
 
 try:
     from bs4 import BeautifulSoup
@@ -45,13 +46,15 @@ def download_paper(code, outdir, timeout=60, debug=False):
     url = baseurl(code) + '.pdf'
     fn = os.path.join(outdir, os.path.basename(url))
 
-    with open(fn, 'wb') as fh:
-        if debug:
-            print('Fetching %s into %s' % (url, fn))
+    with portalocker.Lock(fn, timeout=timeout) as ph:
+        with open(fn, 'wb') as fh:
+            if debug:
+                print('Fetching %s into %s' % (url, fn))
 
-        req = requests.get(url, timeout=timeout)
-        fh.write(req.content)
+            req = requests.get(url, timeout=timeout)
+            fh.write(req.content)
 
-        time.sleep(0.05 + random.uniform(0, 0.1))
+            time.sleep(0.05 + random.uniform(0, 0.1))
+
 
     return fn

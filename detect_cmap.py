@@ -9,6 +9,8 @@ import subprocess
 import glob
 import itertools
 
+import portalocker
+
 try:
     import numpy as np
     import pandas as pd
@@ -43,7 +45,10 @@ def convert_to_img(fn, format='png', other_opt=[], outdir=None):
     else:
         raise ValueError("Only jpg, png supported by pdftoppm")
 
-    subprocess.check_call(['pdftoppm', '-' + format, *other_opt, fn, outpre])
+    # TODO: check if/which images to rerender
+    with portalocker.Lock(fn, timeout=10) as fh:
+        subprocess.check_call(['pdftoppm', '-' + format, *other_opt, fn, outpre])
+
     for pg in glob.iglob(outpre + '*.' + ext):
         yield pg
 
