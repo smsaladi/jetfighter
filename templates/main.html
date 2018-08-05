@@ -224,13 +224,9 @@ $(document).ready(function() {
       { 'orderable': false, 'targets': [0] }
       ],
       "pageLength": 50,
-      "searching": false,
+      dom: 'lrtp',
       "lengthChange": false,
-      // "oLanguage": {
-      //   sLengthMenu: "_MENU_",
-      // },
       "fnInitComplete" : function( oSettings, json ){
-        // $("#jfTable_length").detach().prependTo("#pagebox");
         $('#pagebox').val(oSettings['_iDisplayLength']);
       }
   });
