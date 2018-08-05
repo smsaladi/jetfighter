@@ -3,6 +3,10 @@
   padding-right: 10px;
 } */
 
+body {
+  padding-bottom: 5%;
+}
+
 table {
   margin: auto;
   width: 90%;
