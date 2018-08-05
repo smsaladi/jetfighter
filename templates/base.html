@@ -30,12 +30,22 @@
 
   {% block custom_head %}
 
-
   {% endblock %}
 
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 
   <title>Fighting the Jet</title>
+
+  <script>
+      function toggleDiv(id) {
+        var div = document.getElementById(id);
+        div.style.display = div.style.display == "block" ? "none" : "block";
+      }
+      // function remove(item) {
+      //   var element = item.parentNode.removeChild(item) getElementById(elementId);
+      //   element. parentNode. removeChild(element);
+      // }
+  </script>
 
 </head>
 
@@ -60,19 +70,52 @@
     <hr/>
     <div class="row">
       <div class="col-md-8">
-        <p class="lead" style="margin-bottom:1.5em">
+        <p class="lead" style="margin-bottom:1.5em; font-size: 120%;">
             Scientists co-opt our visual system to convey numerical data in a format that's easily understandable using spatial and color variation to capture details of the underlying data. A “colormap” transforms the set of numbers into a pattern of plotted colors.
             </br></br>
             When done poorly, this transformation introduces well-established visual artifacts and obscures the underlying detail. Furthermore, certain colormaps create images that are inaccessible to readers with anomalous color vision (i.e. colorblindness).
             </br></br>
-            Unfortunately, a widely-used colormap "jet" faces these issues but is pervasive in the scientific literature. Short of contacting the author for the data and plotting code (perhaps, the "gold standard"), there isn't an easy way to re-render old images with more friendly colormaps. fixthejet provides a solution!
+            Unfortunately, widely-used rainbow colormaps, like "jet", face these issues but are pervasive in the scientific literature. Jetfighter aims to prevent this by detecting problematic colormaps in publically available pre-print manuscripts and then contacting the authors, if necessary.
             </br></br>
-            Explore the application here and check out our companion website at <a href="https://fixthejet.caltech.edu<">fixthejet.caltech.edu</a>!
+            Explore the results of the application here, and check out a companion website that provides a solution for published figures, <a href="http://fixthejet.caltech.edu">fixthejet.caltech.edu</a>, as well!
           </p>
       </div>
       <div class="col-md-4 mx-auto text-center align-self-center">
-        <img src="XXX" class="img-fluid"
-          alt="An image that shows you why not jet"/>
+        <div>
+          <img src="XXX" class="img-fluid" alt="An image that shows you why not jet"/>
+        </div>
+        <br>
+        <div>
+          <button type="button" class="btn btn-outline-dark" onclick="toggleDiv('moreinfo');this.remove();">Show colormap resources</button>
+        </div>
+        <div id="moreinfo" style="display: none; font-size: 85%;">
+          <div class="list-group">
+              <a href="https://jakevdp.github.io/blog/2014/10/16/how-bad-is-your-colormap/"
+                 target="_blank" class="list-group-item list-group-item-action">
+                How bad is your colormap?
+              </a>
+              <a href="https://predictablynoisy.com/makeitpop-intro"
+                 target="_blank" class="list-group-item list-group-item-action">
+                makeitpop, a tool to perceptually warp your data
+              </a>
+              <a href="https://blogs.mathworks.com/steve/2014/10/20/a-new-colormap-for-matlab-part-2-troubles-with-rainbows/"
+                 target="_blank" class="list-group-item list-group-item-action">
+                A new colormap for MATLAB
+              </a>
+              <a href="https://bids.github.io/colormap/"
+                 target="_blank" class="list-group-item list-group-item-action">
+                The making of viridis
+              </a>
+              <a href="http://idl.cs.washington.edu/papers/quantitative-color"
+                 target="_blank" class="list-group-item list-group-item-action">
+                 An empirical assessment of quantitative colormaps
+              </a>
+              <a href="http://fixthejet.caltech.edu"
+                 target="_blank" class="list-group-item list-group-item-action">
+                fixthejet: An online colormap converter
+              </a>
+            </div>
+        </div>
       </div>
     </div>
   </div>
@@ -119,7 +162,6 @@
 
 
 {% block custom_js %}
-
 
 {% endblock %}
 
