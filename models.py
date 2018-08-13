@@ -15,7 +15,7 @@ class Biorxiv(db.Model):
     title           = db.Column(db.String)
     parse_status    = db.Column(db.Integer, default=-1, nullable=False)
     _parse_data     = db.Column('parse_data', db.String)
-    _pages          = db.Column('pages', db.String)
+    _pages          = db.Column('pages', db.String, default='[]', nullable=False)
     _author_contact = db.Column('author_contact', db.String)
     email_sent      = db.Column(db.Integer)
 
