@@ -402,7 +402,7 @@ def process_paper(obj):
     3. if rainbow, get authors
     4. update database entry with colormap detection and author info
     """
-
+    obj = db.session.merge(obj)
     with tempfile.TemporaryDirectory() as td:
         fn = download_paper(obj.id, outdir=td)
         obj.pages, obj.parse_data = detect_rainbow_from_file(fn)
