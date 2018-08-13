@@ -71,24 +71,24 @@
   {% for p in papers %}
       {% if p.parse_status == 1 %}
       <tr class="detected" id="{{ p.id }}">
-        <td class="details-control"></td>
+        <td class="details-control align-middle"></td>
       {% elif p.parse_status == 0 %}
       <tr class="notdetected" id="{{ p.id }}">
-        <td class="details-control"></td>
+        <td class="details-control align-middle"></td>
       {% else %}
       <tr class="notyetrun" id="{{ p.id }}">
         <td></td>
       {% endif %}
 
-        <td>{{ p.title }}</td>
+        <td class="align-middle">{{ p.title }}</td>
 
-        <td class="text-center">
+        <td class="text-center align-middle">
           <a href="{{ p.url }}" target="_blank">
             <i class="fas fa-file-alt" alt="Link to paper"></i>
           </a>
         </td>
 
-        <td class="text-center">
+        <td class="text-center align-middle">
           {% if p.parse_status == 1 %}
           <i class="far fa-eye-slash"></i>
           {% elif p.parse_status == 0 %}
@@ -96,7 +96,7 @@
           {% endif %}
         </td>
 
-        <td class="text-center" style="color:black">
+        <td class="text-center align-middle" style="color:black">
           {% if p.parse_status == 1 %}
             {% if p.email_sent %}
             Yes
