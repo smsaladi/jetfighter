@@ -354,24 +354,6 @@ def parse_tweet(t, db=db, objclass=Biorxiv, verbose=True):
         process_paper.queue(obj)
 
 
-# @app.cli.command()
-# @click.option('--test', is_flag=True)
-# def monitor_biorxiv(test):
-#     """Starts the twitter listener on the command line
-#     """
-#     if test:
-#         filter_args = dict(track=['clinton', 'sanders'])
-#         stream_listener = StreamListener(lambda t: parse_tweet(t, db=None))
-#     else:
-#         # user_id for 'biorxivpreprint'
-#         filter_args = dict(follow=['1949132852'])
-#         stream_listener = StreamListener(parse_tweet)
-
-#     stream = tweepy.Stream(auth=tweepy_api.auth, listener=stream_listener,
-#             trim_user='True', include_entities=True, tweet_mode='extended')
-#     stream.filter(**filter_args)
-
-
 @app.cli.command()
 def retrieve_timeline():
     """Picks up current timeline (for testing)
