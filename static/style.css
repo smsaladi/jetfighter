@@ -7,6 +7,19 @@ body {
   padding-bottom: 5%;
 }
 
+/* https://stackoverflow.com/a/22196760/2320823 */
+.vertical-center {
+   min-height: 100%;  /* Fallback for browsers do NOT support vh unit */
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+}
+
+.preview-box {
+  min-height: 160px;
+  min-width: 160px;
+}
+
 table {
   margin: auto;
   width: 90%;
@@ -24,12 +37,12 @@ table {
 }
 
 tr.detected {
-  color: #8e0152;
+  color: #440154;
   background-color: #f2f2f2;
 }
 
 tr.notdetected {
-  color: #276419;
+  color: #1F968B;
   background-color: #f2f2f2;
 }
 

@@ -25,12 +25,12 @@
         </li>
         <li class="navbar-text nav-item">
           <a class="nav-link" href="?categories=1">Manuscripts with rainbow detection
-            <i class="far fa-eye-slash"></i>
+            <i class="far fa-eye-slash" style="color: #440154"></i>
           </a>
         </li>
         <li class="navbar-text nav-item">
           <a class="nav-link" href="?categories=0">Manuscripts without detection
-              <i class="far fa-check-circle"></i>
+              <i class="far fa-check-circle" style="color: #1F968B"></i>
           </a>
         </li>
         <!-- <a class="nav-link" href="?categories=0,1">Only run</a> -->
@@ -59,11 +59,13 @@
 
 <table id="jfTable" class="table display">
   <thead>
-  <tr class="text-center">
-    <th>View Results</th>
-    <th>Title (<a href="https://www.biorxiv.org">Paper Link</a>)</th>
-    <th>Authors notified?</th>
-  </tr>
+    <tr class="text-center">
+      <th>View Results</th>
+      <th>Title</th>
+      <th>Paper Link</th>
+      <th>Parse Status</th>
+      <th>Authors notified?</th>
+    </tr>
   </thead>
   <tbody>
   {% for p in papers %}
@@ -77,12 +79,23 @@
       <tr class="notyetrun" id="{{ p.id }}">
         <td></td>
       {% endif %}
-        <td>
-          {{ p.title }}
+
+        <td>{{ p.title }}</td>
+
+        <td class="text-center">
           <a href="{{ p.url }}">
-            <i class="fa fa-file-text" alt="Link to paper"></i>
+            <i class="fas fa-file-alt" alt="Link to paper"></i>
           </a>
         </td>
+
+        <td class="text-center">
+          {% if p.parse_status == 1 %}
+          <i class="far fa-eye-slash"></i>
+          {% elif p.parse_status == 0 %}
+          <i class="far fa-check-circle"></i>
+          {% endif %}
+        </td>
+
         <td class="text-center" style="color:black">
           {% if p.parse_status == 1 %}
             {% if p.email_sent %}
@@ -113,7 +126,7 @@
 
 <div id="pgpreviewtempl" class="col-sm-2">
   <a href="xxx" target="_blank">
-      <div style="">
+      <div>
         <img src="" class="img-fluid img-thumbnail img-preview-detected mx-auto"
              data-toggle="tooltip" data-placement="top" title="Navigate to pdf of page(new window)"/>
       </div>
@@ -217,8 +230,10 @@ function retrieve_previews(id) {
 $(document).ready(function() {
   var table = $('#jfTable').DataTable( {
     columns: [
-        { name: 'expand' },
-        { name: 'title' },
+        { name: 'expand'},
+        { name: 'title', "width": "65%" },
+        { name: 'link' },
+        { name: 'status' },
         { name: 'authors' },
     ],
     'columnDefs' : [
