@@ -186,7 +186,6 @@ function retrieve_previews(id) {
         i.classList.remove('fa');
         i.classList.remove('fa-circle-o-notch');
         i.classList.remove('fa-spin');
-        console.log(i);
       }
       $.ajax({
         url : "/preview/" + id + "/" + pg,
@@ -197,9 +196,7 @@ function retrieve_previews(id) {
   function insertPages(pgs) {
     Object.keys(pgs).map(function(pg, index) {
       status = pgs[pg];
-      console.log(pg, status);
       pvt = $('#pgpreviewtempl').clone()[0];
-      console.log(pvt);
       pvt.removeAttribute('id');
 
       // add link to page in pdf
@@ -211,19 +208,16 @@ function retrieve_previews(id) {
       // call to retrieve page and insert it
       p_preview.appendChild(pvt);
       i = $(pvt).find("img")[0];
-      console.log(i.className)
 
       if (status == "true") {
         i.classList.add("img-preview-detected");
       } else {
         i.classList.add("img-preview-notdetected");
       }
-      console.log(i.className)
       insertPage(id, pg, i);
     });
   }
 
-  console.log("/pages/" + id)
   // get page numbers to show and initiate callback
   $.ajax({
     url : "/pages/" + id,
@@ -258,7 +252,6 @@ $(document).ready(function() {
   $('table').on('click', 'td.details-control', function () {
     var tr = $(this).closest('tr');
     var row = table.row( tr );
-    console.log(row);
     if ( row.child.isShown() ) {
       row.child.hide();
       tr.removeClass('shown');
