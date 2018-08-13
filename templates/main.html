@@ -83,7 +83,7 @@
         <td>{{ p.title }}</td>
 
         <td class="text-center">
-          <a href="{{ p.url }}">
+          <a href="{{ p.url }}" target="_blank">
             <i class="fas fa-file-alt" alt="Link to paper"></i>
           </a>
         </td>
@@ -201,6 +201,12 @@ function retrieve_previews(id) {
       pvt = $('#pgpreviewtempl').clone()[0];
       console.log(pvt);
       pvt.removeAttribute('id');
+
+      // add link to page in pdf
+      a_link = $(pvt).find("a");
+      a_link.attr("href",
+        'http://biorxiv.org/cgi/content/short/' + id + '.pdf#page=' + pg
+      );
 
       // call to retrieve page and insert it
       p_preview.appendChild(pvt);
