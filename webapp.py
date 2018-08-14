@@ -375,7 +375,7 @@ def resubmit_job(ids):
             print("id not yet in database")
 
 
-@rq.job(timeout='10m')
+@rq.job(timeout='30m')
 def process_paper(obj):
     """Processes paper starting from url/code
 
