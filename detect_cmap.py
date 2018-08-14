@@ -71,6 +71,9 @@ def parse_img(fn):
     im = im[np.sum(im, axis=2) != 255*3]
     im = im[np.sum(im, axis=1) != 0]
 
+    if im.size == 0:
+        return None
+
     # im = im.reshape(im.shape[0] * im.shape[1], 3)
     im = pd.DataFrame.from_records(im, columns=['R', 'G', 'B'])
 
