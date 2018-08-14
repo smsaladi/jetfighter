@@ -93,21 +93,6 @@ def home():
                      .limit(500)
                      .all())
 
-    rerun = flask.request.args.get('rerun')
-    if rerun:
-        if flask.session.get('logged_in'):
-            if rerun == 'all':
-                jobs_queued = 0
-                for p_obj in papers:
-                    process_paper.queue(p_obj)
-                    jobs_queued += 1
-                flask.flash("{} jobs have been queued. "
-                            "Make sure rq workers are running".format(jobs_queued))
-            else:
-                flask.flash("Sorry, only rerun='all' is implemented right now")
-        else:
-            flask.flash("Sorry, you need to login to do that!")
-
     return flask.render_template('main.html', app=app, papers=papers)
 
 @app.route('/pages/<string:paper_id>')
@@ -264,16 +249,36 @@ def notify_authors(paper_id, force=0):
     else:
         return flask.jsonify(result=False, message="not logged in")
 
-@app.route('/rerun/<string:paper_id>', methods=['POST'])
-def rerun_web(paper_id):
+@app.route('/fix/<string:paper_id>/<int:new>', methods=['POST'])
+def fix_status(paper_id, new):
     if flask.session.get('logged_in'):
-        rec = Biorxiv.query.filter_by(id=paper_id).first()
-        if not rec:
+        record = Biorxiv.query.filter_by(id=paper_id).first()
+        if not record:
             return flask.jsonify(result=False, message="paper not found")
-        process_paper.queue(rec)
-        return flask.jsonify(result=True, message="successfully sent")
+        record.parse_status = new
+        db.session.merge(record)
+
+        return flask.jsonify(result=True, message="successfully changed")
     else:
         return flask.jsonify(result=False, message="not logged in")
+
+@app.route('/rerun', methods=['GET', 'POST'])
+@app.route('/rerun/<string:paper_id>', methods=['POST'])
+def rerun_web(paper_id=None):
+    if flask.session.get('logged_in'):
+        n_queue = _rerun(paper_id)
+        if n_queue == -1:
+            return flask.jsonify(result=False, message="Not found")
+        else:
+            message = "Queued {} jobs".format(n_queue)
+            # If a GET request, then we need a redirect
+            if flask.request.method == 'GET':
+                flask.flash(message)
+                return flask.redirect('/')
+            return flask.jsonify(result=True, message=message)
+    else:
+        flask.flash("Not logged in")
+        return flask.redirect('/')
 
 @app.route('/login', methods=['GET', 'POST'])
 def admin_login():
@@ -362,18 +367,6 @@ def retrieve_timeline():
             trim_user='True', include_entities=True, tweet_mode='extended'):
         parse_tweet(t)
 
-@app.cli.command()
-@click.argument('ids', nargs=-1)
-def resubmit_job(ids):
-    """Picks up current timeline (for testing)
-    """
-    for i in ids:
-        rec = Biorxiv.query.filter_by(id=i).first()
-        if rec:
-            process_paper.queue(rec)
-        else:
-            print("id not yet in database")
-
 
 @rq.job(timeout='30m')
 def process_paper(obj):
@@ -395,6 +388,7 @@ def process_paper(obj):
             obj.parse_status = 0
         db.session.merge(obj)
         db.session.commit()
+
 
 ## NOTE: NEEDS WORK
 @pytest.fixture()
@@ -432,26 +426,45 @@ def test_integration(test_setup_cleanup):
         'o.borkowski@imperial.ac.uk', 'carlos.bricio@gmail.com',
         'g.stan@imperial.ac.uk', 't.ellis@imperial.ac.uk'])
 
-@app.cli.command()
-@click.argument('paper_id', required=False)
-def rerun(paper_id=None):
+
+def _rerun(paper_id, async=True):
     """Rerun some or all papers in database
     """
     n_queue = 0
     if paper_id:
         rec = Biorxiv.query.filter_by(id=paper_id).first()
         if rec:
-            process_paper.queue(rec)
+            process_paper.queue(rec, async=async)
             n_queue += 1
         else:
-            print("paper_id {} not found".format(paper_id))
+            print("paper_id {} not found".format(paper_id), file=sys.stderr)
+            return -1
     else:
-        for rec in Biorxiv.query.all():
-            process_paper.queue(rec)
+        for rec in Biorxiv.query.filter_by(parse_status=-1).all():
+            process_paper.queue(rec, async=async)
             n_queue += 1
+    return n_queue
+
+
+@app.cli.command()
+@click.argument('paper_ids', nargs=-1, default=None, required=False)
+@click.option('--sync', is_flag=True, default=False)
+def rerun(paper_ids, sync):
+    """Rerun some or all papers in database
+    """
+    n_queue = 0
+
+    if paper_ids and len(paper_ids) > 1:
+        for p in paper_ids:
+            if _rerun(paper_id, async=not sync) != -1:
+                n_queue += 1
+    else:
+        n_queue = _rerun(paper_ids[0], async=not sync)
 
     print("Queued {} jobs".format(n_queue))
+
     return
+
 
 if __name__ == "__main__":
     app.run(debug=True, threaded=True, use_reloader=False)

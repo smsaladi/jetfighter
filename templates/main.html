@@ -33,6 +33,13 @@
               <i class="far fa-check-circle" style="color: #1F968B"></i>
           </a>
         </li>
+
+        {% if session['logged_in'] %}
+        <li class="navbar-text nav-item">
+          <a class="nav-link" href="/rerun">Rerun missing</a>
+        </li>
+        {% endif %}
+
         <!-- <a class="nav-link" href="?categories=0,1">Only run</a> -->
         <li class="navbar-text nav-item">
           <input id="filterbox" class="form-control mr-sm-2" type="search" placeholder="Filter rows"
