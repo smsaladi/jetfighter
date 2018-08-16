@@ -85,7 +85,7 @@ def home():
     if cats:
         cats = [int(x) for x in cats.split(',')]
     else:
-        cats = [-1, 0, 1]
+        cats = [0, 1]
 
     papers = (Biorxiv.query
                      .filter(Biorxiv.parse_status.in_(cats))
