@@ -296,7 +296,7 @@ def rerun_web(paper_id=None):
             return flask.jsonify(result=n_queue != -1, message=message)
     else:
         flask.flash("Not logged in")
-        return flask.redirect('/')
+        return flask.redirect('/login')
 
 @app.route('/login', methods=['GET', 'POST'])
 def admin_login():
