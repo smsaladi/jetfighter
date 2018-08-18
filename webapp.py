@@ -265,17 +265,29 @@ def fix_status(paper_id, new):
 @app.route('/rerun', methods=['GET', 'POST'])
 @app.route('/rerun/<string:paper_id>', methods=['POST'])
 def rerun_web(paper_id=None):
+    """Requeue jobs from the web interface
+
+    If only a single paper, then do this synchronously.
+    If all (i.e. paper_id == None), then do this on the queue
+    to avoid delaying the redirect.
+
+    """
     if flask.session.get('logged_in'):
-        n_queue = _rerun(paper_id)
-        if n_queue == -1:
-            return flask.jsonify(result=False, message="Not found")
+        if paper_id is None:
+            _rerun.queue(paper_id)
+            flask.flash("Rerun job has been queued")
+            return flask.redirect('/')
         else:
-            message = "Queued {} jobs".format(n_queue)
-            # If a GET request, then we need a redirect
+            n_queue = _rerun(paper_id)
+            if n_queue == -1:
+                message = "Paper not found"
+            else:
+                message = "Paper has been queued"
+
             if flask.request.method == 'GET':
                 flask.flash(message)
                 return flask.redirect('/')
-            return flask.jsonify(result=True, message=message)
+            return flask.jsonify(result=n_queue != -1, message=message)
     else:
         flask.flash("Not logged in")
         return flask.redirect('/')
@@ -426,40 +438,40 @@ def test_integration(test_setup_cleanup):
         'o.borkowski@imperial.ac.uk', 'carlos.bricio@gmail.com',
         'g.stan@imperial.ac.uk', 't.ellis@imperial.ac.uk'])
 
-
-def _rerun(paper_id, async=True):
+@rq.job()
+def _rerun(paper_id=None):
     """Rerun some or all papers in database
     """
     n_queue = 0
     if paper_id:
         rec = Biorxiv.query.filter_by(id=paper_id).first()
         if rec:
-            process_paper.queue(rec, async=async)
+            process_paper.queue(rec)
             n_queue += 1
         else:
-            print("paper_id {} not found".format(paper_id), file=sys.stderr)
             return -1
     else:
         for rec in Biorxiv.query.filter_by(parse_status=-1).all():
-            process_paper.queue(rec, async=async)
+            process_paper.queue(rec)
             n_queue += 1
     return n_queue
 
 
 @app.cli.command()
 @click.argument('paper_ids', nargs=-1, default=None, required=False)
-@click.option('--sync', is_flag=True, default=False)
 def rerun(paper_ids, sync):
     """Rerun some or all papers in database
     """
     n_queue = 0
 
-    if paper_ids and len(paper_ids) > 1:
+    if paper_ids and len(paper_ids) > 0:
         for p in paper_ids:
-            if _rerun(paper_id, async=not sync) != -1:
+            if _rerun(paper_id) == -1:
+                print("paper_id {} not found".format(paper_id))
+            else:
                 n_queue += 1
     else:
-        n_queue = _rerun(paper_ids[0], async=not sync)
+        n_queue = _rerun()
 
     print("Queued {} jobs".format(n_queue))
 
