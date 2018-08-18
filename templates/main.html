@@ -1,14 +1,5 @@
 {% extends "base.html" %}
 
-{% block custom_head %}
-
-<link rel="stylesheet"
-  href="//cdn.datatables.net/1.10.16/css/dataTables.bootstrap4.min.css"
-  crossorigin="anonymous">
-
-{% endblock %}
-
-
 {% block content %}
 
 <nav class="navbar navbar-expand-lg navbar-dark sticky-top bg-dark rounded-bottom" style="margin:0px; margin-bottom:20px;">
@@ -25,12 +16,12 @@
         </li>
         <li class="navbar-text nav-item">
           <a class="nav-link" href="?categories=1">Manuscripts with rainbow detection
-            <i class="far fa-eye-slash" style="color: #440154"></i>
+            <i class="far fa-eye-slash detected"></i>
           </a>
         </li>
         <li class="navbar-text nav-item">
           <a class="nav-link" href="?categories=0">Manuscripts without detection
-              <i class="far fa-check-circle" style="color: #1F968B"></i>
+              <i class="far fa-check-circle notdetected"></i>
           </a>
         </li>
 
@@ -64,7 +55,7 @@
 <div class="col" style="max-width: 1200px">
 
 
-<table id="jfTable" class="table display">
+<table id="jfTable" class="table display stripe">
   <thead>
     <tr class="text-center">
       <th>View Results</th>
@@ -77,13 +68,13 @@
   <tbody>
   {% for p in papers %}
       {% if p.parse_status == 1 %}
-      <tr class="detected" id="{{ p.id }}">
+      <tr id="{{ p.id }}">
         <td class="details-control align-middle"></td>
       {% elif p.parse_status == 0 %}
-      <tr class="notdetected" id="{{ p.id }}">
+      <tr id="{{ p.id }}">
         <td class="details-control align-middle"></td>
       {% else %}
-      <tr class="notyetrun" id="{{ p.id }}">
+      <tr id="{{ p.id }}">
         <td></td>
       {% endif %}
 
@@ -97,9 +88,9 @@
 
         <td class="text-center align-middle">
           {% if p.parse_status == 1 %}
-          <i class="far fa-eye-slash"></i>
-          {% elif p.parse_status == 0 %}
-          <i class="far fa-check-circle"></i>
+          <i class="far fa-eye-slash detected"></i>
+          {% elif p.parse_status in [0, 2] %}
+          <i class="far fa-check-circle notdetected"></i>
           {% endif %}
         </td>
 
