@@ -29,6 +29,8 @@ try:
 except:
     print('Calculations will fail if this is a worker')
 
+from tqdm import tqdm
+
 from models import db, Biorxiv, Test
 from twitter_listener import StreamListener
 from biorxiv_scraper import find_authors, download_paper
@@ -469,19 +471,24 @@ def _rerun(paper_id=None):
 
 @app.cli.command()
 @click.argument('paper_ids', nargs=-1, default=None, required=False)
-def rerun(paper_ids, sync):
+@click.option('--all', is_flag=True)
+def rerun(paper_ids, all=False):
     """Rerun some or all papers in database
     """
     n_queue = 0
 
-    if paper_ids and len(paper_ids) > 0:
-        for p in paper_ids:
-            if _rerun(paper_id) == -1:
-                print("paper_id {} not found".format(paper_id))
-            else:
-                n_queue += 1
+    if all:
+        for rec in tqdm(Biorxiv.query.all()):
+            process_paper.queue(rec)
     else:
-        n_queue = _rerun()
+        if paper_ids and len(paper_ids) > 0:
+            for p in paper_ids:
+                if _rerun(paper_id) == -1:
+                    print("paper_id {} not found".format(paper_id))
+                else:
+                    n_queue += 1
+        else:
+            n_queue = _rerun()
 
     print("Queued {} jobs".format(n_queue))
 

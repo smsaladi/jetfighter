@@ -19,3 +19,5 @@ retry
 pytest
 pytest-cov
 codecov
+
+tqdm
