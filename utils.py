@@ -4,6 +4,8 @@ import os.path
 from functools import wraps
 from flask import request, Response
 
+import portalocker
+from retry import retry
 
 def read_env(fn='.env', dir=os.path.dirname(os.path.abspath(__file__))):
     """Read env file into environment, if found
@@ -18,6 +20,12 @@ def read_env(fn='.env', dir=os.path.dirname(os.path.abspath(__file__))):
                     env[key] = val
                     os.environ[key] = val
     return env
+
+
+class Lock(portalocker.Lock):
+    @retry(tries=5, delay=1)
+    def __enter__(self, *args, **kwargs):
+        return super().__enter__(*args, **kwargs)
 
 
 """HTTP Basic Auth

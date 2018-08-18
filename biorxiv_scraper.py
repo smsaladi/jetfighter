@@ -8,12 +8,14 @@ import random
 import re
 
 import requests
-import portalocker
 
 try:
     from bs4 import BeautifulSoup
 except:
     print('Calculations will fail if this is a worker')
+
+from utils import Lock
+
 
 def baseurl(code):
     return 'http://biorxiv.org/cgi/content/short/{}'.format(code)
@@ -46,7 +48,7 @@ def download_paper(code, outdir, timeout=60, debug=False):
     url = baseurl(code) + '.pdf'
     fn = os.path.join(outdir, os.path.basename(url))
 
-    with portalocker.Lock(fn, timeout=timeout) as ph:
+    with Lock(fn, timeout=timeout) as ph:
         with open(fn, 'wb') as fh:
             if debug:
                 print('Fetching %s into %s' % (url, fn))

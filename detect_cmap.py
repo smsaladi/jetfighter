@@ -9,8 +9,6 @@ import subprocess
 import glob
 import itertools
 
-import portalocker
-
 try:
     import numpy as np
     import pandas as pd
@@ -21,6 +19,8 @@ try:
     from colorspacious import cspace_convert
 except:
     print('Calculations will fail if this is a worker')
+
+from utils import Lock
 
 
 def convert_to_img(fn, format='png', other_opt=[], outdir=None):
@@ -46,7 +46,7 @@ def convert_to_img(fn, format='png', other_opt=[], outdir=None):
         raise ValueError("Only jpg, png supported by pdftoppm")
 
     # TODO: check if/which images to rerender
-    with portalocker.Lock(fn, timeout=10) as fh:
+    with Lock(fn, timeout=10) as fh:
         subprocess.check_call(['pdftoppm', '-' + format, *other_opt, fn, outpre])
 
     for pg in glob.iglob(outpre + '*.' + ext):
