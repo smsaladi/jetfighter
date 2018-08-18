@@ -10,3 +10,5 @@ colorspacious
 
 lxml
 BeautifulSoup4
+
+PyPDF2

@@ -24,6 +24,11 @@ import tweepy
 
 import pytest
 
+try:
+    from PyPDF2 import PdfFileReader
+except:
+    print('Calculations will fail if this is a worker')
+
 from models import db, Biorxiv, Test
 from twitter_listener import StreamListener
 from biorxiv_scraper import find_authors, download_paper
@@ -105,6 +110,7 @@ def pages(paper_id, prepost=1, maxshow=10):
         return flask.jsonify({})
 
     pages = record.pages
+    page_count = record.page_count
 
     # find pages before and after (requested or default)
     try:
@@ -124,7 +130,7 @@ def pages(paper_id, prepost=1, maxshow=10):
         show_pgs = {i:True for i in pages[:maxshow]}
         # pad with undetected pages
         for i in pages:
-            for j in range(i - prepost, i + prepost + 1):
+            for j in range(i - prepost, min(i + prepost + 1, page_count)):
                 if len(show_pgs) < maxshow:
                     if j not in pages:
                         show_pgs[j] = False
@@ -379,6 +385,9 @@ def retrieve_timeline():
             trim_user='True', include_entities=True, tweet_mode='extended'):
         parse_tweet(t)
 
+def page_count(fn):
+    with open(fn, 'rb') as fh:
+        return PdfFileReader(fh).getNumPages()
 
 @rq.job(timeout='30m')
 def process_paper(obj):
@@ -393,6 +402,7 @@ def process_paper(obj):
     with tempfile.TemporaryDirectory() as td:
         fn = download_paper(obj.id, outdir=td)
         obj.pages, obj.parse_data = detect_rainbow_from_file(fn)
+        obj.page_count = page_count(fn)
         if len(obj.pages) > 0:
             obj.parse_status = 1
             obj.author_contact = find_authors(obj.id)
