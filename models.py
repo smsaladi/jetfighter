@@ -10,6 +10,7 @@ from biorxiv_scraper import baseurl
 db = SQLAlchemy()
 
 class Biorxiv(db.Model):
+    source          = db.Column(db.String(10), default='biorxiv')
     id              = db.Column(db.String, primary_key=True)
     created         = db.Column(db.DateTime)
     title           = db.Column(db.String)
