@@ -23,7 +23,10 @@ class Biorxiv(db.Model):
 
     @hybrid_property
     def parse_data(self):
-        return pd.read_json(self._parse_data)
+        if self._parse_data:
+            return pd.read_json(self._parse_data)
+        else:
+            return pd.DataFrame(columns=['fn', 'cm', 'pct_cm', 'pct_page'])
 
     @parse_data.setter
     def parse_data(self, df):
