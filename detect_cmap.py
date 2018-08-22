@@ -183,7 +183,7 @@ def detect_rainbow_from_colors(df_cmap, cm_thresh=0.5):
     """Returns a tuple of pages determined to have rainbow and
     results of colormap detection
     """
-    rainbow_maps = ['flag', 'prism', 'hsv', 'gist_rainbow',
+    rainbow_maps = ['prism', 'hsv', 'gist_rainbow',
         'rainbow', 'nipy_spectral', 'gist_ncar', 'jet']
 
     df_cmap = df_cmap[df_cmap['pct_cm'] > cm_thresh]
