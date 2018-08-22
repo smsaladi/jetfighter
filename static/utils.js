@@ -1,4 +1,10 @@
 
+// For hover-over tooltip
+$(document).ready(function(){
+  $('[data-toggle="tooltip"]').tooltip();
+});
+
+
 // unused
 // remove rows without results
 function removeNotYetRun() {
@@ -10,8 +16,3 @@ function removeNotDetected() {
   $('.notdetected').remove();
   this.disabled=true;
 }
-
-// For hover-over tooltip
-$(document).ready(function(){
-    $('[data-toggle="tooltip"]').tooltip();
-});

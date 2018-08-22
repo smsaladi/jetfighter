@@ -9,7 +9,7 @@ body {
 
 /* https://stackoverflow.com/a/22196760/2320823 */
 .vertical-center {
-   min-height: 100%;  /* Fallback for browsers do NOT support vh unit */
+  min-height: 100%;  /* Fallback for browsers do NOT support vh unit */
   min-height: 100vh;
   display: flex;
   align-items: center;
@@ -27,13 +27,12 @@ table {
   display: block;
 }
 
-#pagebox {
-  display: inline;
+th {
+  text-align: center;
 }
 
-#jfTable_length {
-  /* display: inline; */
-  /* margin: 0; */
+#pagebox {
+  display: inline;
 }
 
 .detected {

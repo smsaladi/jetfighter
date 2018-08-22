@@ -117,8 +117,11 @@
 
 <div id="infotemplate">
   <div class="row paperpreview">
-
   </div>
+  <br/>
+  <a href="/detail/XXX" class="detail_link btn btn-secondary btn-sm btn-block" role="button">
+    Detailed results &nbsp; <i class="fas fa-info-circle"></i>
+  </a>
 </div>
 
 
@@ -166,5 +169,6 @@
 
 <script src="{{ url_for('static', filename='table.js') }}"></script>
 <script src="{{ url_for('static', filename='preview.js') }}"></script>
+<script src="{{ url_for('static', filename='utils.js') }}"></script>
 
 {% endblock %}

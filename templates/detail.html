@@ -1,0 +1,149 @@
+{% extends "base.html" %}
+
+{% block custom_head %}
+<style>
+  td:first-child {
+    font-weight: bold;
+  }
+</style>
+
+{% endblock %}
+
+
+{% block content %}
+
+<nav class="navbar navbar-expand-lg navbar-dark sticky-top bg-dark rounded-bottom" style="margin:0px; margin-bottom:20px;">
+  <a class="navbar-brand" href="/">Jet Fighting!</a>
+
+  <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarText" aria-controls="navbarText" aria-expanded="false" aria-label="Toggle navigation">
+      <span class="navbar-toggler-icon"></span>
+  </button>
+
+</nav>
+
+<div class="row justify-content-center">
+<div class="col" style="max-width: 1200px">
+
+
+<table id="table" class="table display stripe">
+  <thead style="display:none;">
+    <tr>
+      <th>Attribute</th>
+      <th>Value</th>
+    </tr>
+  </thead>
+  <tbody>
+      <tr>
+        <td class="align-right">Title</td>
+        <td>{{ title }}</td>
+      </tr>
+      <tr>
+        <td class="align-right">Link to Paper</td>
+        <td>
+          <a href="{{ url }}">{{ url }}</a>
+        </td>
+      </tr>
+      <tr>
+        <td class="align-right">Parse status</td>
+        <td>
+          {% if parse_status == 1 %}
+            Problematic colors/colormap detected
+            <tr>
+                <td class="align-right">Page(s) detected/worth revisiting</td>
+                <td>{{ pages }}</td>
+            </tr>
+            <tr>
+                <td class="align-right">Author notified?</td>
+                <td>
+                {% if email_sent == 1 %}
+                  Yes, authors have been sent a message.
+                {% else %}
+                  No, authors have <u>not</u> yet been sent a message.
+                </td>
+                {% endif %}
+            </tr>
+          {% elif parse_status == 0 %}
+            No problematic colors/colormap detected
+          {% else %}
+            Not yet screened
+          {% endif %}
+        </td>
+      </tr>
+  </tbody>
+</table>
+
+</div>
+</div>
+
+<div class="row">
+  <div class="col-md-8">
+    <div id="preview_section" class="row justify-content-center">
+
+    </div>
+  </div>
+
+  <div class="col-md-4">
+    <div class="row justify-content-center">
+      {{ cm_parse_html|safe }}
+    </div>
+  </div>
+</div>
+
+
+<!-- templates -->
+<div style="display: none;">
+
+
+<div id="infotemplate">
+  <div class="row paperpreview">
+  </div>
+</div>
+
+
+<div id="pgpreviewtempl" class="col-sm-2">
+  <a href="xxx" target="_blank">
+      <div>
+        <img src="" class="img-fluid img-thumbnail img-preview-detected mx-auto"
+             data-toggle="tooltip" data-placement="top" title="Navigate to pdf of page(new window)"/>
+      </div>
+  </a>
+</div>
+<!-- end templates -->
+
+
+{% endblock %}
+
+
+{% block custom_js %}
+<script src="//cdn.datatables.net/1.10.16/js/jquery.dataTables.min.js"></script>
+<script src="//cdn.datatables.net/1.10.16/js/dataTables.bootstrap4.min.js"></script>
+
+<script src="{{ url_for('static', filename='preview.js') }}"></script>
+<script src="{{ url_for('static', filename='utils.js') }}"></script>
+
+<script>
+$(document).ready(function() {
+  var table = $('#table').DataTable( {
+      dom: 'lrtp',
+      "paging":   false,
+      "ordering": false,
+      "info":     false,
+  });
+
+  var parse_table = $('#cm_parse_table').DataTable( {
+      dom: 'lrtp',
+      "order": [[ 2, "desc" ]],
+      "lengthChange": false,
+      "pagingType": "simple",
+      "pageLength": 50
+  });
+
+  var prev = retrieve_previews("{{ paper_id }}", true);
+  $("#preview_section").append(prev);
+
+});
+
+
+</script>
+
+{% endblock %}

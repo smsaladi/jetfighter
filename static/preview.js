@@ -1,9 +1,12 @@
 // Initiate conversion of images.
 // Separate call for which pages and retrieving images
-function retrieve_previews(id) {
+function retrieve_previews(id, all_pages = false) {
   info = $('#infotemplate').clone()[0];
   info.removeAttribute('id');
   p_preview = $(info).find(".paperpreview")[0];
+
+  detail_link = $(info).find(".detail_link");
+  detail_link.attr("href", '/detail/' + id);
 
   // Retrieve image numbers along with per-page parse statuses
   // add placeholders on the page until finally retrieved
@@ -48,8 +51,13 @@ function retrieve_previews(id) {
   }
 
   // get page numbers to show and initiate callback
+  if (all_pages)
+    url = "/pages/" + id + "?all=1";
+  else
+    url = "/pages/" + id;
+
   $.ajax({
-    url : "/pages/" + id,
+    url : url,
     dataType: 'json'
   }).done(insertPages);
 

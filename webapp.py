@@ -126,6 +126,18 @@ def pages(paper_id, prepost=1, maxshow=10):
     except:
         pass
 
+    # if requested, show all pages with each page's status
+    try:
+        all_pages = math.fabs(int(flask.request.args.get('all')))
+        if int(all_pages) == 1:
+            show_pgs = {i:True for i in pages[:maxshow]}
+            for i in range(page_count):
+                if i not in show_pgs:
+                    show_pgs[i] = False
+            return flask.jsonify(show_pgs)
+    except:
+        pass
+
     show_pgs = {}
     if pages:
         # add all detected pages up to maxshow count
@@ -168,58 +180,37 @@ def preview(paper_id, pg):
     return flask.jsonify(b64img)
 # flask.render_template('preview_img.html', b64img=b64img)
 
-@app.route('/result/<string:paper_id>')
-def show_results(paper_id, prepost=1, maxshow=10):
-    """Have a buttons to resubmit job, modify email, and queue for send now/later
+@app.route('/detail/<string:paper_id>')
+def show_details(paper_id, prepost=1, maxshow=10):
+    """
     """
     record = Biorxiv.query.filter_by(id=paper_id).first()
     if not record:
-        return render_template('result.html', table='Paper not found')
-    html = record.parse_data.to_html(bold_rows=False, index=False, border=0)
-    pages = record.pages
+        flask.flash('Sorry! Results with that ID have not been found')
+        return flask.redirect('/')
 
-    # find pages before and after (requested or default)
-    try:
-        prepost = math.fabs(int(flask.request.args.get('prepost')))
-    except:
-        pass
+    # Format colormap for viewing
+    df_cm = record.parse_data
+    df_cm['fn'] = df_cm['fn'].str.split('-', n=1).str[1]
+    df_cm['pct_cm'] = df_cm['pct_cm'] * 100
+    df_cm['pct_page'] = df_cm['pct_page'] * 100
+    df_cm.rename(columns={
+        'fn': 'Page',
+        'cm': 'Colormap Abbreviation',
+        'pct_cm': 'Colormap Coverage (%)',
+        'pct_page': 'Page Coverage (%)',
+    }, inplace=True)
 
-    if len(pages) > 0:
-        # need to somehow keep information the pages being shown
-        show_pgs = set()
-        for i, num in enumerate(pages):
-            # if number of pages to go + current show pages is greater than maxshow,
-            # then don't add prepost
-            if len(show_pgs) + len(pages) - i + 1 < maxshow:
-                show_pgs.update(range(num-prepost, num+prepost))
-            else:
-                show_pgs.add(num)
-            # if we exceed maxshow, then no more
-            if len(show_pgs) > maxshow:
-                break
-    else:
-        show_pgs = set(range(1, maxshow + 1))
-
-    # download and convert paper to images
-    # delete those pages that aren't shown
-    pdf_fn = "static/previews/{}.pdf".format(paper_id)
-    if not os.path.exists(pdf_fn):
-        pdf_fn = download_paper(paper_id, "static/previews/")
-
-    show_fn = []
-    # pdftoppm -jpeg -jpegopt quality=75,progressive=y -scale-to 350
-    for pg_fn in convert_to_img(pdf_fn, outdir='static/previews/', format='jpeg',
-        other_opt=['-jpegopt', 'quality=50,progressive=y', '-scale-to', '350']):
-        pg_num = pg_fn.rsplit('-', maxsplit=1)[1].split('.')[0]
-        if int(pg_num) in show_pgs:
-            show_fn.append(flask.url_for('static', filename=pg_fn.replace('static/', '')))
-        #else:
-        #    os.unlink(pg_fn)
-
-    # os.unlink(pdf_fn)
+    cm_table = df_cm.to_html(bold_rows=False, index=False, border=0,
+        table_id="cm_parse_table", float_format='%.2f')
 
     # display images
-    return flask.render_template('result.html', imgs=show_fn, table=html)
+    return flask.render_template('detail.html',
+        paper_id=record.id, title=record.title, url=record.url,
+        pages=", ".join([str(p) for p in record.pages]),
+        parse_status=record.parse_status, author_notified=record.email_sent,
+        cm_parse_html=cm_table
+        )
 
 @app.route('/notify/<string:paper_id>', methods=['POST'])
 @app.route('/notify/<string:paper_id>/<int:force>', methods=['POST'])
