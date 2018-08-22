@@ -42,6 +42,7 @@ import utils
 _ = utils.read_env()
 
 app = Flask(__name__)
+app.config['BASE_URL'] = os.environ['BASE_URL']
 
 # For data storage
 app.config['SQLALCHEMY_DATABASE_URI'] = os.environ['SQLALCHEMY_DATABASE_URI']
