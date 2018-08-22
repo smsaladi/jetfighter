@@ -14,7 +14,7 @@ class Biorxiv(db.Model):
     id              = db.Column(db.String, primary_key=True)
     created         = db.Column(db.DateTime)
     title           = db.Column(db.String)
-    parse_status    = db.Column(db.Integer, default=-1, nullable=False)
+    parse_status    = db.Column(db.Integer, default=0, nullable=False)
     _parse_data     = db.Column('parse_data', db.String)
     _pages          = db.Column('pages', db.String, default='[]', nullable=False)
     page_count      = db.Column('page_count', db.Integer, default=0, nullable=False)

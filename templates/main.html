@@ -15,12 +15,12 @@
           <a class="nav-link" href="/">All Manuscripts</a>
         </li>
         <li class="navbar-text nav-item">
-          <a class="nav-link" href="?categories=1">Manuscripts with rainbow detection
+          <a class="nav-link" href="?categories=1,2">Manuscripts with rainbow detection
             <i class="far fa-eye-slash detected"></i>
           </a>
         </li>
         <li class="navbar-text nav-item">
-          <a class="nav-link" href="?categories=0">Manuscripts without detection
+          <a class="nav-link" href="?categories=-1,-2">Manuscripts without detection
               <i class="far fa-check-circle notdetected"></i>
           </a>
         </li>
@@ -62,21 +62,17 @@
       <th>Title</th>
       <th>Paper Link</th>
       <th>Parse Status</th>
-      <th>Authors notified?</th>
+      {% if session['logged_in'] %}
+        <th>Actions</th>
+      {% else %}
+        <th>Authors notified?</th>
+      {% endif %}
     </tr>
   </thead>
   <tbody>
   {% for p in papers %}
-      {% if p.parse_status == 1 %}
-      <tr id="{{ p.id }}">
-        <td class="details-control align-middle"></td>
-      {% elif p.parse_status == 0 %}
-      <tr id="{{ p.id }}">
-        <td class="details-control align-middle"></td>
-      {% else %}
-      <tr id="{{ p.id }}">
-        <td></td>
-      {% endif %}
+    <tr id="{{ p.id }}">
+      <td class="details-control align-middle"></td>
 
         <td class="align-middle">{{ p.title }}</td>
 

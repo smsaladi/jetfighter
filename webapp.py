@@ -93,7 +93,7 @@ def home():
     if cats:
         cats = [int(x) for x in cats.split(',')]
     else:
-        cats = [0, 1]
+        cats = [-2, -1, 1, 2]
 
     papers = (Biorxiv.query
                      .filter(Biorxiv.parse_status.in_(cats))
@@ -401,7 +401,7 @@ def process_paper(obj):
             obj.parse_status = 1
             obj.author_contact = find_authors(obj.id)
         else:
-            obj.parse_status = 0
+            obj.parse_status = -1
         db.session.merge(obj)
         db.session.commit()
 
@@ -455,7 +455,9 @@ def _rerun(paper_id=None):
         else:
             return -1
     else:
-        for rec in Biorxiv.query.filter_by(parse_status=-1).all():
+        for rec in Biorxiv.query.filter(
+                        Biorxiv.parse_status.in_([-1, 0, 1])
+                        ).all():
             process_paper.queue(rec)
             n_queue += 1
     return n_queue
