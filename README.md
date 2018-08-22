@@ -10,14 +10,14 @@ Unfortunately, widely-used rainbow colormaps, like "jet", face these issues but 
 Explore recently screened manuscripts here, and check out a companion website that provides a solution for published figures, [fixthejet.caltech.edu](fixthejet.caltech.edu), as well!
 
 
-## Remaining to-do:
+## To-do 
+(a wishlist we may never get to...)
 
 * Monitor arxiv feed (make a list of other preprint servers)
 * Check detection code and data saved into database
-* Admin view
-    - code to compose email
-    - code to rerun job
+* Some heuristic for red/green used together? in addition to rainbow colormaps?
 * Write tests for cmap detection code
+* Current pending count
 
 ## Other notes
 
@@ -25,6 +25,8 @@ Worker non-pip dependencies
     - [poppler](https://poppler.freedesktop.org/) for `pdftoppm`
 
 * a number of config vars need to be in `.env` and are handled on Heroku with [heroku-config](https://github.com/xavdid/heroku-config)
+
+* some jobs can take a long time, so we adjust `timeout` to `30m`. Also, make sure that `wait_timeout` on the mysql database is sufficiently large (e.g. `28800` seconds)
 
 ```shell
 heroku config:push -o #  Writes the contents of a local file into heroku config (-o overwrites)

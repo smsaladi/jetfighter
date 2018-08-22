@@ -12,11 +12,11 @@ function retrieve_previews(id, all_pages = false) {
   // add placeholders on the page until finally retrieved
   function insertPage(id, pg, i) {
       i.src = '';
-      i.className += " fa fa-circle-o-notch fa-spin";
+      i.className += " fa fa-circle-notch fa-spin";
       function replacePagePlaceholder(data) {
         i.src = data;
         i.classList.remove('fa');
-        i.classList.remove('fa-circle-o-notch');
+        i.classList.remove('fa-circle-notch');
         i.classList.remove('fa-spin');
       }
       $.ajax({

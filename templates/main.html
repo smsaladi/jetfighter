@@ -83,19 +83,47 @@
         </td>
 
         <td class="text-center align-middle">
-          {% if p.parse_status == 1 %}
+          {% if p.parse_status > 0 %}
           <i class="far fa-eye-slash detected"></i>
-          {% elif p.parse_status in [0, 2] %}
+          {% elif p.parse_status < 0 %}
           <i class="far fa-check-circle notdetected"></i>
           {% endif %}
         </td>
 
         <td class="text-center align-middle" style="color:black">
-          {% if p.parse_status == 1 %}
-            {% if p.email_sent %}
-            Yes
-            {% else %}
-            Not yet
+          {% if session['logged_in'] %}
+            {% if p.parse_status > 0 %}
+              {% if p.email_sent %}
+                Email sent<br/>
+                <div class="btn-group">
+                    <button class="btn btn-dark btn-sm btn-fix">
+                      Incorrect
+                    </button>
+                </div>
+              {% else %}
+                <div class="btn-group">
+                  <button class="btn btn-light btn-sm btn-email">
+                    Send email
+                  </button>
+                  <button class="btn btn-dark btn-sm btn-fix">
+                    Incorrect
+                  </button>
+                </div>
+              {% endif %}
+            {% elif p.parse_status < 0 %}
+                <div class="btn-group">
+                  <button class="btn btn-dark btn-sm btn-fix">
+                    Incorrect
+                  </button>
+                </div>
+            {% endif %}
+          {% else %}
+            {% if p.parse_status > 0 %}
+              {% if p.email_sent %}
+              Yes
+              {% else %}
+                Not yet
+              {% endif %}
             {% endif %}
           {% endif %}
         </td>
@@ -166,5 +194,42 @@
 <script src="{{ url_for('static', filename='table.js') }}"></script>
 <script src="{{ url_for('static', filename='preview.js') }}"></script>
 <script src="{{ url_for('static', filename='utils.js') }}"></script>
+
+<script>
+function send_action(button, action) {
+  // Disable button to avoid multiple clicks
+  button.attr('disabled','disabled');
+
+  id = button.closest('tr').attr('id');
+  var status = $("<div>", {"class": "fa fa-circle-notch fa-spin"});
+      button.closest('td').append(status);
+
+  function replacePlaceholder(data) {
+    status.removeClass("fa fa-circle-notch fa-spin");
+    status.addClass("status-text");
+    status.html(data['message']);
+  }
+
+  $.ajax({
+      type: "POST",
+      url :  "/" + action + "/" + id,
+      dataType: 'json',
+    }).done(replacePlaceholder);
+}
+
+function toggle_status() {
+  send_action($(this), 'toggle');
+}
+
+function send_email() {
+  send_action($(this), 'notify');
+}
+
+
+$(document).ready(function(){
+    $(".btn-email").click(send_email);
+    $(".btn-fix").click(toggle_status);
+});
+</script>
 
 {% endblock %}

@@ -6,6 +6,7 @@ import os.path
 import re
 import math
 import tempfile
+import itertools
 import base64
 
 import gevent.monkey
@@ -14,7 +15,7 @@ gevent.monkey.patch_all()
 import flask
 from flask import Flask, render_template
 from flask_rq2 import RQ
-from flask_mail import Message
+from flask_mail import Mail, Message
 from flask_wtf.csrf import CSRFProtect, CSRFError
 
 from sqlalchemy import desc
@@ -70,7 +71,7 @@ app.config['MAIL_DEFAULT_SENDER'] = os.environ['MAIL_DEFAULT_SENDER'].replace("'
 # 30 messages per minute rate limit
 app.config['MAIL_MAX_EMAILS'] = 30
 
-app.config['DEBUG'] = os.environ.get('DEBUG')
+app.config['DEBUG'] = os.environ.get('DEBUG', 0)
 
 app.config['WEB_PASSWORD'] = os.environ['WEB_PASSWORD']
 
@@ -83,6 +84,7 @@ tweepy_auth.set_access_token(
     app.config['TWITTER_KEY'], app.config['TWITTER_SECRET'])
 tweepy_api = tweepy.API(tweepy_auth)
 
+mail = Mail(app)
 
 @app.route('/')
 def home():
@@ -221,12 +223,10 @@ def notify_authors(paper_id, force=0):
         if not record:
             return flask.jsonify(result=False, message="paper not found")
 
-        try:
-            corr = record.author_contact.get('corr')
-        except:
-            noemail = True
+        addr = record.author_contact.values()
+        addr = list(itertools.chain.from_iterable(addr))
 
-        if noemail or corr is None or '@' not in corr:
+        if addr is [] or '@' not in "".join(addr):
             return flask.jsonify(result=False,
                 message="mangled or missing email addresses")
 
@@ -234,29 +234,36 @@ def notify_authors(paper_id, force=0):
             return flask.jsonify(result=False,
                 message="email already sent. must use force=1 to send another")
 
-        if len(request.form['message']) < 50:
-            return flask.jsonify(result=False,
-                                 message="POST missing message")
-
         msg = Message(
-            "Biorxiv Manuscript {}: Colormap suggestion".format(record.id),
+            "[jetfighter] BioRxiv manuscript {}".format(record.id),
             sender="saladi@caltech.edu",
-            recipients=[corr])
-        msg.body = request.form['message']
+            recipients=["smsaladi@gmail.com"]) # addr)
+        msg.body = flask.render_template("email_notification.txt",
+            paper_id=paper_id,
+            pages=record.pages_str,
+            title=record.title,
+            detail_url=flask.url_for('show_details', paper_id=paper_id))
+        print(msg.body)
         mail.send(msg)
 
         return flask.jsonify(result=True, message="successfully sent")
     else:
         return flask.jsonify(result=False, message="not logged in")
 
-@app.route('/fix/<string:paper_id>/<int:new>', methods=['POST'])
-def fix_status(paper_id, new):
+@app.route('/toggle/<string:paper_id>', methods=['POST'])
+def toggle_status(paper_id):
     if flask.session.get('logged_in'):
         record = Biorxiv.query.filter_by(id=paper_id).first()
         if not record:
             return flask.jsonify(result=False, message="paper not found")
-        record.parse_status = new
+        if record.parse_status > 0:
+            record.parse_status = -2
+        elif record.parse_status < 0:
+            record.parse_status = 2
+        else:
+            return flask.jsonify(result=False, message="Not yet parsed")
         db.session.merge(record)
+        db.session.commit()
 
         return flask.jsonify(result=True, message="successfully changed")
     else:
@@ -466,7 +473,8 @@ def _rerun(paper_id=None):
 @app.cli.command()
 @click.argument('paper_ids', nargs=-1, default=None, required=False)
 @click.option('--all', is_flag=True)
-def rerun(paper_ids, all=False):
+@click.option('--now', is_flag=True)
+def rerun(paper_ids, all=False, now=False):
     """Rerun some or all papers in database
     """
     n_queue = 0
@@ -477,10 +485,14 @@ def rerun(paper_ids, all=False):
     else:
         if paper_ids and len(paper_ids) > 0:
             for p in paper_ids:
-                if _rerun(paper_id) == -1:
-                    print("paper_id {} not found".format(paper_id))
+                if now:
+                    rec = Biorxiv.query.filter_by(id=p).first()
+                    process_paper(rec)
                 else:
-                    n_queue += 1
+                    if _rerun(p) == -1:
+                        print("paper_id {} not found".format(p))
+                    else:
+                        n_queue += 1
         else:
             n_queue = _rerun()
 

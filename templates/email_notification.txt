@@ -1,0 +1,42 @@
+Subject: [jetfighter] BioRxiv manuscript {{ paper_id }}
+
+Dear Authors,
+
+tl;dr. Please consider improving the colormap used on {{ pages }} of your manuscript entitled
+
+{{ title }}
+{{ config['BASE_URL'] }}{{ detail_url }}
+
+
+
+before publication. At least one figure is not accessible to readers with colorblindness and is also not true to the data, i.e. not perceptually uniform. And, please forgive us if this message has been sent in error.
+
+----
+
+
+We, scientists, co-opt the human visual system to convey numerical data in a format that's easily understandable using spatial and color variation to capture details of the underlying data. A “colormap” transforms the set of numbers into a pattern of plotted colors. However, when done poorly, the resulting image is inaccessible to readers with anomalous color vision (i.e. colorblindness, ~10% of the male population is red-green colorblind) and includes well-established visual artifacts and obscures the underlying detail.
+
+The widely-used rainbow colormap, "jet", faces these issues yet is pervasive in the scientific literature. JetFighter guesses that "jet" or another rainbow colormap is present on {{ pages }} of your manuscript {{ paper_id }}. Therefore, we are sending you this email suggesting an improvement before final publication.
+
+Please consider re-rendering the problematic figures using a perceptually uniform, colorblind-friendly colormap (resources below).
+
+And, if this message has been sent in error, please accept our apologies. And, please let us know, so we can debug and improve JetFighter!
+
+Best,
+Shyam/the JetFighter team
+
+
+Resources on setting colormaps across various plotting platforms:
+    * Matlab,      https://www.mathworks.com/help/matlab/ref/colormap.html
+    * ggplot,      https://ggplot2.tidyverse.org/reference/scale_colour_continuous.html
+    * Matplotlib,  https://matplotlib.org/tutorials/colors/colormaps.html
+    * Bokeh,       https://bokeh.pydata.org/en/latest/docs/reference/palettes.html
+    * Altair,      https://altair-viz.github.io/user_guide/API.html?highlight=color#altair.SchemeParams
+    * Holoviews,   http://holoviews.org/user_guide/Colormaps.html
+    * Mathematica, http://reference.wolfram.com/language/guide/ColorSchemes.html
+    * Gnuplot,     https://github.com/Gnuplotting/gnuplot-palettes
+
+
+Visit and improve JetFighter!
+    * website,     {{ config['BASE_URL'] }}
+    * codebase,    https://github.com/smsaladi/jetfighter

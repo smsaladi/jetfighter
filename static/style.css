@@ -90,5 +90,16 @@ tr.shown td.details-control {
   background: url('https://datatables.net/examples/resources/details_close.png') no-repeat center center;
 }
 
-# change to font awesome icon
-# https://stackoverflow.com/questions/14736496/use-font-awesome-icons-in-css
+/*
+change to font awesome icon
+https://stackoverflow.com/questions/14736496/use-font-awesome-icons-in-css
+*/
+
+.status-text {
+  font-size: 90%;
+}
+
+.detail-row-detected {
+  color: white !important;
+  background-color: #461969 !important;
+}

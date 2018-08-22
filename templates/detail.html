@@ -130,12 +130,21 @@ $(document).ready(function() {
       "info":     false,
   });
 
+  var rainbow_cm = ['prism', 'hsv', 'gist_rainbow',
+        'rainbow', 'nipy_spectral', 'gist_ncar', 'jet'];
+
   var parse_table = $('#cm_parse_table').DataTable( {
       dom: 'lrtp',
       "order": [[ 2, "desc" ]],
       "lengthChange": false,
       "pagingType": "simple",
-      "pageLength": 50
+      "pageLength": 50,
+      "createdRow": function( row, data, dataIndex){
+        console.log(row, data);
+        if(rainbow_cm.indexOf(data[0]) >= 0) {
+          $(row).addClass('detail-row-detected');
+        }
+      }
   });
 
   var prev = retrieve_previews("{{ paper_id }}", true);

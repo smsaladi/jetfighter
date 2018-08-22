@@ -38,6 +38,19 @@ class Biorxiv(db.Model):
         self._pages = json.dumps(lst)
 
     @hybrid_property
+    def pages_str(self):
+        if len(self.pages) == 0:
+            raise ValueError("Can't pretty print if pages = []")
+        if len(self.pages) == 1:
+            return "page {}".format(self.pages[0])
+        if len(self.pages) == 2:
+            return "pages {} and {}".format(*self.pages)
+        else:
+            pretty = ", ".join([str(p) for p in self.pages[:-1]])
+            pretty = 'pages {}, and {}'.format(pretty, self.pages[-1])
+            return pretty
+
+    @hybrid_property
     def author_contact(self):
         if self._author_contact:
             return json.loads(self._author_contact)
