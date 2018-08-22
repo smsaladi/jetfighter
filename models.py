@@ -39,7 +39,9 @@ class Biorxiv(db.Model):
 
     @hybrid_property
     def author_contact(self):
-        return json.loads(self._author_contact)
+        if self._author_contact:
+            return json.loads(self._author_contact)
+        return None
 
     @author_contact.setter
     def author_contact(self, data):
