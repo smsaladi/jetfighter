@@ -72,12 +72,16 @@ tr:nth-child(even) {
   color: white;
 }
 
-.img-preview-detected {
+.preview-detected {
   box-shadow: inset 0 0 8px 1px #461969;
+  margin-bottom: 5%;
+  text-align: center;
 }
 
-.img-preview-notdetected {
+.preview-notdetected {
   box-shadow: inset 0 0 8px 1px #29af7f;
+  margin-bottom: 5%;
+  text-align: center;
 }
 
 
