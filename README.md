@@ -1,6 +1,10 @@
 README
 ======
 
+[![Build Status](https://travis-ci.org/smsaladi/jetfighter.svg?branch=master)](https://travis-ci.org/smsaladi/jetfighter)
+[![codecov](https://codecov.io/gh/smsaladi/jetfighter/branch/master/graph/badge.svg)](https://codecov.io/gh/smsaladi/jetfighter)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
 Scientists co-opt our visual system to convey numerical data in a format that's easily understandable using spatial and color variation to capture details of the underlying data. A “colormap” transforms the set of numbers into a pattern of plotted colors. 
 
 When done poorly, this transformation introduces well-established visual artifacts and obscures the underlying detail. Furthermore, certain colormaps create images that are inaccessible to readers with anomalous color vision (i.e. colorblindness). 
