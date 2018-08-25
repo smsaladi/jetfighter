@@ -1,4 +1,4 @@
-Subject: [jetfighter] BioRxiv manuscript {{ paper_id }}
+Subject: [JetFighter] bioRxiv manuscript {{ paper_id }}
 
 Dear Authors,
 

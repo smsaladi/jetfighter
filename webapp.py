@@ -234,7 +234,7 @@ def notify_authors(paper_id, force=0):
                 message="email already sent. use the cli to send another")
 
         msg = Message(
-            "[jetfighter] BioRxiv manuscript {}".format(record.id),
+            "[JetFighter] bioRxiv manuscript {}".format(record.id),
             recipients=addr,
             reply_to=app.config['MAIL_REPLY_TO'],
             bcc=[app.config['MAIL_DEFAULT_SENDER']])
