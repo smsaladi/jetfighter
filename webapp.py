@@ -232,7 +232,7 @@ def notify_authors(paper_id, force=0):
 
         if force != 1 and record.email_sent == 1:
             return flask.jsonify(result=False,
-                message="email already sent. must use force=1 to send another")
+                message="email already sent. use the cli to send another")
 
         msg = Message(
             "[jetfighter] BioRxiv manuscript {}".format(record.id),
