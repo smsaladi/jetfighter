@@ -13,7 +13,7 @@ import gevent.monkey
 gevent.monkey.patch_all()
 
 import flask
-from flask import Flask, render_template
+from flask import Flask
 from flask_rq2 import RQ
 from flask_mail import Mail, Message
 from flask_wtf.csrf import CSRFProtect, CSRFError
@@ -33,7 +33,6 @@ except:
 from tqdm import tqdm
 
 from models import db, Biorxiv, Test
-from twitter_listener import StreamListener
 from biorxiv_scraper import find_authors, download_paper
 from detect_cmap import convert_to_img, detect_rainbow_from_file
 
@@ -169,7 +168,6 @@ def preview(paper_id, pg):
     if not os.path.exists(pdf_fn):
         pdf_fn = download_paper(paper_id, "static/previews/")
 
-    show_fn = []
     for pg_fn in convert_to_img(pdf_fn, outdir='static/previews/', format='jpeg',
         other_opt=['-f', str(pg), '-l', str(pg), '-jpegopt', 'quality=50,progressive=y', '-scale-to', '350']):
         if re.match(".*\-0*{}".format(pg), pg_fn):
@@ -328,7 +326,7 @@ def logout():
         flask.flash("You have been successfully logged out")
     else:
         flask.flash("Not logged in! (but the session has been cleared)")
-    return redirect('/')
+    return flask.redirect('/')
 
 @app.errorhandler(CSRFError)
 def handle_csrf_error(e):
