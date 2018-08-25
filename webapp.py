@@ -211,7 +211,7 @@ def show_details(paper_id, prepost=1, maxshow=10):
     return flask.render_template('detail.html',
         paper_id=record.id, title=record.title, url=record.url,
         pages=", ".join([str(p) for p in record.pages]),
-        parse_status=record.parse_status, author_notified=record.email_sent,
+        parse_status=record.parse_status, email_sent=record.email_sent,
         cm_parse_html=cm_table
         )
 
