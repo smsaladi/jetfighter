@@ -142,7 +142,6 @@ $(document).ready(function() {
       "pagingType": "simple",
       "pageLength": 50,
       "createdRow": function( row, data, dataIndex){
-        console.log(row, data);
         if(rainbow_cm.indexOf(data[0]) >= 0) {
           $(row).addClass('detail-row-detected');
         }
