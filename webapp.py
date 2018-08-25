@@ -246,6 +246,10 @@ def notify_authors(paper_id, force=0):
         print(msg.body)
         mail.send(msg)
 
+        record.email_sent = 1
+        db.session.merge(record)
+        db.session.commit()
+
         return flask.jsonify(result=True, message="successfully sent")
     else:
         return flask.jsonify(result=False, message="not logged in")
