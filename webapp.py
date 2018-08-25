@@ -196,6 +196,7 @@ def show_details(paper_id, prepost=1, maxshow=10):
         df_cm['fn'] = df_cm['fn'].str.split('-', n=1).str[1]
         df_cm['pct_cm'] = df_cm['pct_cm'] * 100
         df_cm['pct_page'] = df_cm['pct_page'] * 100
+    df_cm = df_cm[['cm', 'fn', 'pct_cm', 'pct_page']]
     df_cm.rename(columns={
         'fn': 'Page',
         'cm': 'Colormap Abbreviation',
