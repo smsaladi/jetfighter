@@ -67,6 +67,7 @@ app.config['MAIL_USE_TLS'] = bool(int(os.environ['MAIL_USE_TLS']))
 app.config['MAIL_USERNAME'] = os.environ['MAIL_USERNAME']
 app.config['MAIL_PASSWORD'] = os.environ['MAIL_PASSWORD']
 app.config['MAIL_DEFAULT_SENDER'] = os.environ['MAIL_DEFAULT_SENDER'].replace("'", "")
+app.config['MAIL_REPLY_TO'] = os.environ['MAIL_REPLY_TO'].replace("'", "")
 app.config['MAIL_MAX_EMAILS'] = int(os.environ['MAIL_MAX_EMAILS'])
 
 app.config['DEBUG'] = os.environ.get('DEBUG', 0)
@@ -236,14 +237,14 @@ def notify_authors(paper_id, force=0):
 
         msg = Message(
             "[jetfighter] BioRxiv manuscript {}".format(record.id),
-            sender="saladi@caltech.edu",
-            recipients=["smsaladi@gmail.com"]) # addr)
+            recipients=addr,
+            reply_to=app.config['MAIL_REPLY_TO'],
+            bcc=[app.config['MAIL_DEFAULT_SENDER']])
         msg.body = flask.render_template("email_notification.txt",
             paper_id=paper_id,
             pages=record.pages_str,
             title=record.title,
             detail_url=flask.url_for('show_details', paper_id=paper_id))
-        print(msg.body)
         mail.send(msg)
 
         record.email_sent = 1
