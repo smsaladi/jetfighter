@@ -61,15 +61,13 @@ app.config['TWITTER_KEY'] = os.environ['TWITTER_KEY']
 app.config['TWITTER_SECRET'] = os.environ['TWITTER_SECRET']
 
 # for author notification
-app.config['MAIL_SERVER'] = 'smtp.office365.com'
-app.config['MAIL_PORT'] = 587
-app.config['MAIL_USE_TLS'] = True
+app.config['MAIL_SERVER'] = os.environ['MAIL_SERVER']
+app.config['MAIL_PORT'] = int(os.environ['MAIL_PORT'])
+app.config['MAIL_USE_TLS'] = bool(int(os.environ['MAIL_USE_TLS']))
 app.config['MAIL_USERNAME'] = os.environ['MAIL_USERNAME']
 app.config['MAIL_PASSWORD'] = os.environ['MAIL_PASSWORD']
 app.config['MAIL_DEFAULT_SENDER'] = os.environ['MAIL_DEFAULT_SENDER'].replace("'", "")
-# https://technet.microsoft.com/en-us/library/exchange-online-limits.aspx
-# 30 messages per minute rate limit
-app.config['MAIL_MAX_EMAILS'] = 30
+app.config['MAIL_MAX_EMAILS'] = int(os.environ['MAIL_MAX_EMAILS'])
 
 app.config['DEBUG'] = os.environ.get('DEBUG', 0)
 
