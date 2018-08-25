@@ -29,7 +29,7 @@ $(document).ready(function() {
     }
     else {
       if (!row.child()) {
-        prev = retrieve_previews( row.data().DT_RowId );
+        prev = retrieve_previews( row.data().DT_RowId, false);
         row.child(prev);
       }
       row.child.show();
