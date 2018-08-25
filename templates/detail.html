@@ -11,6 +11,7 @@
 
 
 {% block content %}
+<a id="content"></a>
 
 <nav class="navbar navbar-expand-lg navbar-dark sticky-top bg-dark rounded-bottom" style="margin:0px; margin-bottom:20px;">
   <a class="navbar-brand" href="/">Jet Fighting!</a>
@@ -123,6 +124,7 @@
 
 <script>
 $(document).ready(function() {
+
   var table = $('#table').DataTable( {
       dom: 'lrtp',
       "paging":   false,
@@ -149,6 +151,8 @@ $(document).ready(function() {
 
   var prev = retrieve_previews("{{ paper_id }}", true);
   $("#preview_section").append(prev);
+
+  $("#content")[0].scrollIntoView()
 
 });
 
