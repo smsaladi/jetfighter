@@ -31,8 +31,9 @@ rainbow colormap is present on {{ pages }} of your manuscript {{ paper_id }}.
 Therefore, we are sending you this email to suggest an improvement
 before your manuscript's final publication.
 
-Please consider re-rendering the problematic figures using a
-perceptually uniform, colorblind-friendly colormap (resources below).
+Please consider re-rendering the problematic figure(s) using a
+perceptually uniform, colorblind-friendly colormap (e.g. viridis, cividis,
+parula; resources below).
 
 And, if this message has been sent in error, please accept our apologies.
 Do let us know, so we can debug and improve JetFighter!
