@@ -226,10 +226,11 @@ function send_email() {
   send_action($(this), 'notify');
 }
 
-
 $(document).ready(function(){
-    $(".btn-email").click(send_email);
-    $(".btn-fix").click(toggle_status);
+  $('#jfTable').on('page.dt search.dt length.dt', function () {
+    $(".btn-email").off("click").on("click", send_email);
+    $(".btn-fix").off("click").on("click", toggle_status);
+  });
 });
 </script>
 
