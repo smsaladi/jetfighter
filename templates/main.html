@@ -195,43 +195,7 @@
 <script src="{{ url_for('static', filename='table.js') }}"></script>
 <script src="{{ url_for('static', filename='preview.js') }}"></script>
 <script src="{{ url_for('static', filename='utils.js') }}"></script>
+<script src="{{ url_for('static', filename='actions.js') }}"></script>
 
-<script>
-function send_action(button, action) {
-  // Disable button to avoid multiple clicks
-  button.attr('disabled','disabled');
-
-  id = button.closest('tr').attr('id');
-  var status = $("<div>", {"class": "fa fa-circle-notch fa-spin"});
-      button.closest('td').append(status);
-
-  function replacePlaceholder(data) {
-    status.removeClass("fa fa-circle-notch fa-spin");
-    status.addClass("status-text");
-    status.html(data['message']);
-  }
-
-  $.ajax({
-      type: "POST",
-      url :  "/" + action + "/" + id,
-      dataType: 'json',
-    }).done(replacePlaceholder);
-}
-
-function toggle_status() {
-  send_action($(this), 'toggle');
-}
-
-function send_email() {
-  send_action($(this), 'notify');
-}
-
-$(document).ready(function(){
-  $('#jfTable').on('page.dt search.dt length.dt', function () {
-    $(".btn-email").off("click").on("click", send_email);
-    $(".btn-fix").off("click").on("click", toggle_status);
-  });
-});
-</script>
 
 {% endblock %}
