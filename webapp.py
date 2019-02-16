@@ -236,8 +236,7 @@ def notify_authors(paper_id, force=0):
         msg = Message(
             "[JetFighter] bioRxiv manuscript {}".format(record.id),
             recipients=addr,
-            reply_to=app.config['MAIL_REPLY_TO'],
-            bcc=[app.config['MAIL_DEFAULT_SENDER']])
+            reply_to=app.config['MAIL_REPLY_TO'])
         msg.body = flask.render_template("email_notification.txt",
             paper_id=paper_id,
             pages=record.pages_str,
