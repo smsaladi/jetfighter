@@ -224,6 +224,9 @@ def notify_authors(paper_id, force=0):
 
         addr = record.author_contact.values()
         addr = list(itertools.chain.from_iterable(addr))
+        # don't bother everyone if there are a ton of authors
+        if len(addr) > 6:
+            addr = [*addr[:2], *addr[-3:]]
 
         if addr is [] or '@' not in "".join(addr):
             return flask.jsonify(result=False,
