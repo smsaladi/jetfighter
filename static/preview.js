@@ -30,20 +30,13 @@ function retrieve_previews(id, all_pages = false) {
 
       // Retrieve image numbers along with per-page parse statuses
       // remove placeholders
-      i = pvt.find("img");
-      i.hide();
-      i.attr("src", "");
-      $.ajax({
-        url : "/preview/" + id + "/" + pg,
-        dataType: 'json',
-      }).done((function( pvt, i ){
-        return function(data) {
-          pvt.find(".placeholder").remove();
-          i.attr("src", data);
-          i.show();
-        };
-      })( pvt, i ));
-
+      pvt
+        .find("img")
+        .hide()
+        .attr("src", "https://iiif-biorxiv.saladi.org/iiif/2/biorxiv:" + id + ".pdf/full/250,/0/default.jpg?page=" + pg)
+        .on("load", function() {
+          $(this).show().parent().find(".placeholder").remove();
+        });
     });
   }
 
