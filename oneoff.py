@@ -22,9 +22,8 @@ def add_posted_dates():
     records = (Biorxiv.query
                       .filter_by(posted_date="")
                       .order_by(desc(Biorxiv.created))
-                      .all()[:10])
+                      .all())
     for r in tqdm(records):
-        print(r.title)
         r.posted_date = find_date(r.id)
         db.session.merge(r)
         db.session.commit()

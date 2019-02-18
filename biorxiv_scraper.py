@@ -33,7 +33,7 @@ def find_authors(code):
     """
     url = baseurl(code) + '.article-info'
     page = req(url)
-    soup = BeautifulSoup(page.text, 'lxml')
+    soup = BeautifulSoup(page, 'lxml')
 
     addr = soup(text=re_at)
     addr = [t.replace('{at}', '@') for t in addr]
