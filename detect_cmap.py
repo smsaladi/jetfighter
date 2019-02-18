@@ -18,8 +18,6 @@ try:
     import skimage.io
     import matplotlib.pyplot as plt
     from colorspacious import cspace_convert
-
-    from joblib import Parallel, delayed
 except:
     print('Calculations will fail if this is a worker')
 
@@ -251,8 +249,7 @@ def detect_rainbow_from_iiif(paper_id, pages, debug=False):
     print(paper_id, pages)
 
     url = "https://iiif-biorxiv.saladi.org/iiif/2/biorxiv:{}.full.pdf/full/full/0/default.png?page={}"
-    # data = Parallel(n_jobs=3)(delayed(parse_img)(url.format(paper_id, pg), str(pg)) for pg in range(27, 31))
-    data = Parallel(n_jobs=3)(delayed(parse_img)(url.format(paper_id, pg), str(pg)) for pg in range(1, pages+1))
+    data = [parse_img(url.format(paper_id, pg), str(pg)) for pg in range(1, pages+1)]
     df = pd.concat(data, ignore_index=True, copy=False)
 
     return detect_rainbow_from_colors(df)

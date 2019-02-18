@@ -8,8 +8,6 @@ scikit-image
 
 colorspacious
 
-joblib
-
 urllib3
 lxml
 BeautifulSoup4
