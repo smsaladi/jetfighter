@@ -373,7 +373,7 @@ def process_paper(obj):
 
     if len(obj.pages) > 0:
         obj.parse_status = 1
-        if len(obj.author_contact) == 0:
+        if obj.author_contact is None:
             obj.author_contact = find_authors(obj.id)
     else:
         obj.parse_status = -1
