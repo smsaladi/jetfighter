@@ -19,7 +19,7 @@ class Biorxiv(db.Model):
     _parse_data     = db.Column('parse_data', db.String)
     _pages          = db.Column('pages', db.String, default='[]', nullable=False)
     page_count      = db.Column('page_count', db.Integer, default=0, nullable=False)
-    posted_date     = db.Column(db.String(10))
+    posted_date     = db.Column(db.String(10), default='')
     _author_contact = db.Column('author_contact', db.String)
     email_sent      = db.Column(db.Integer)
 

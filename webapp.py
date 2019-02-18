@@ -365,13 +365,16 @@ def process_paper(obj):
     4. update database entry with colormap detection and author info
     """
     # obj = db.session.merge(obj)
-    obj.page_count = count_pages(obj.id)
-    obj.posted_date = find_date(obj.id)
+    if obj.page_count == 0:
+        obj.page_count = count_pages(obj.id)
+    if obj.posted_date == "":
+        obj.posted_date = find_date(obj.id)
     obj.pages, obj.parse_data = detect_rainbow_from_iiif(obj.id, obj.page_count)
 
     if len(obj.pages) > 0:
         obj.parse_status = 1
-        obj.author_contact = find_authors(obj.id)
+        if len(obj.author_contact) == 0:
+            obj.author_contact = find_authors(obj.id)
     else:
         obj.parse_status = -1
 
