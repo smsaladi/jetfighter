@@ -3,6 +3,7 @@
 
 import os.path
 import argparse
+import urllib
 
 import tempfile
 import subprocess
@@ -17,11 +18,10 @@ try:
     import skimage.io
     import matplotlib.pyplot as plt
     from colorspacious import cspace_convert
+
+    from joblib import Parallel, delayed
 except:
     print('Calculations will fail if this is a worker')
-
-from utils import Lock
-
 
 def convert_to_img(fn, format='png', other_opt=[], outdir=None):
     """Converts each page of the pdf to a png file.
@@ -46,8 +46,7 @@ def convert_to_img(fn, format='png', other_opt=[], outdir=None):
         raise ValueError("Only jpg, png supported by pdftoppm")
 
     # TODO: check if/which images to rerender
-    with Lock(fn, timeout=10) as fh:
-        subprocess.check_call(['pdftoppm', '-' + format, *other_opt, fn, outpre])
+    subprocess.check_call(['pdftoppm', '-' + format, *other_opt, fn, outpre])
 
     for pg in glob.iglob(outpre + '*.' + ext):
         yield pg
@@ -57,11 +56,15 @@ def convert_to_img(fn, format='png', other_opt=[], outdir=None):
         td.cleanup()
 
 
-def parse_img(fn):
+def parse_img(fn, name=None):
     """Parses an image file into a dataframe of R, G, B color counts
         Pure white and black are removed to reduce the size of the calculation
     """
-    im = skimage.io.imread(fn)
+    try:
+        im = skimage.io.imread(fn)
+    except urllib.error.HTTPError as e:
+        print(fn, name)
+        raise e
 
     # Check that we have an RGB array (as opposed to grayscale/RGBA)
     assert im.shape[2] == 3
@@ -81,7 +84,10 @@ def parse_img(fn):
     col = im.groupby(im.columns.tolist()).size()
     col = col.reset_index().rename(columns={0: 'count'})
 
-    col['fn'], _ = os.path.splitext(os.path.basename(fn))
+    if name is None:
+        col['fn'], _ = os.path.splitext(os.path.basename(fn))
+    else:
+        col['fn'] = name
 
     return col
 
@@ -178,20 +184,33 @@ def find_cm_dists(df, max_diff=1.0):
 
     return cm_stats
 
+rainbow_maps = ['prism', 'hsv', 'gist_rainbow',
+                'rainbow', 'nipy_spectral', 'gist_ncar', 'jet']
 
-def detect_rainbow_from_colors(df_cmap, cm_thresh=0.5):
+def detect_rainbow_from_colors(df_colors, cm_thresh=0.5, debug=None):
     """Returns a tuple of pages determined to have rainbow and
     results of colormap detection
     """
-    rainbow_maps = ['prism', 'hsv', 'gist_rainbow',
-        'rainbow', 'nipy_spectral', 'gist_ncar', 'jet']
+    # Write out RGB colors found
+    if isinstance(debug, str):
+        df_colors.to_csv(debug + '_colors.csv', index=False)
+
+    # Find nearest color for each page
+    df_colors = convert_to_jab(df_colors)
+    df_cmap = df_colors.groupby('fn').apply(find_cm_dists)
+    if isinstance(debug, str):
+        df_cmap.to_csv(debug + '_cm.csv')
 
     df_cmap = df_cmap[df_cmap['pct_cm'] > cm_thresh]
     df_rainbow = df_cmap[df_cmap.index.get_level_values('cm').isin(rainbow_maps)]
     if df_rainbow.size == 0:
         return [], df_cmap
-    pgs_w_rainbow = df_rainbow.index.get_level_values('fn')
-    pgs_w_rainbow = pgs_w_rainbow.str.rsplit('-', 1).str[1].astype(int).unique()
+
+    pgs_w_rainbow = df_rainbow.index.get_level_values('fn').unique()
+    if pgs_w_rainbow.str.contains('-').any():
+        pgs_w_rainbow = pgs_w_rainbow.str.rsplit('-', 1).str[1]
+    pgs_w_rainbow = pgs_w_rainbow.astype(int)
+
     return pgs_w_rainbow.tolist(), df_cmap
 
 
@@ -203,8 +222,6 @@ def test_detect_rainbow_from_file():
               "Change this assertion!")
     else:
         print("FYI, the jet image on page 1 isn't detected")
-    pgs, _ = detect_rainbow_from_file('test/197004.full.pdf')
-    assert pgs == []
 
 
 def detect_rainbow_from_file(fn, debug=False):
@@ -214,18 +231,31 @@ def detect_rainbow_from_file(fn, debug=False):
     df = pd.concat([parse_img(p) for p in convert_to_img(fn)],
         ignore_index=True, copy=False)
 
-    # Write out RGB colors found
-    name, _ = os.path.splitext(fn)
-    if debug:
-        df.to_csv(name + '_colors.csv', index=False)
+    return detect_rainbow_from_colors(df)
 
-    # Find nearest color for each page
-    df = convert_to_jab(df)
-    df_cmap = df.groupby('fn').apply(find_cm_dists)
-    if debug:
-        df_cmap.to_csv(name + '_cm.csv')
 
-    return detect_rainbow_from_colors(df_cmap)
+def test_detect_rainbow_from_iiif():
+    # actually 37 pages, but it takes a long time, just test through 10
+    pgs, _ = detect_rainbow_from_iiif('172627v1', 10)
+    assert np.array_equal(pgs, [9])
+    if 1 in pgs:
+        print("FYI, the jet image on page 1 is successfully detected."
+              "Change this assertion!")
+    else:
+        print("FYI, the jet image on page 1 isn't detected")
+
+def detect_rainbow_from_iiif(paper_id, pages, debug=False):
+    """Pull images from iiif server
+    """
+
+    print(paper_id, pages)
+
+    url = "https://iiif-biorxiv.saladi.org/iiif/2/biorxiv:{}.full.pdf/full/full/0/default.png?page={}"
+    # data = Parallel(n_jobs=3)(delayed(parse_img)(url.format(paper_id, pg), str(pg)) for pg in range(27, 31))
+    data = Parallel(n_jobs=3)(delayed(parse_img)(url.format(paper_id, pg), str(pg)) for pg in range(1, pages+1))
+    df = pd.concat(data, ignore_index=True, copy=False)
+
+    return detect_rainbow_from_colors(df)
 
 
 def main():

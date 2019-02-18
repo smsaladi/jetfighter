@@ -8,7 +8,11 @@ scikit-image
 
 colorspacious
 
+joblib
+
+requests
+requests-cache
 lxml
 BeautifulSoup4
 
-PyPDF2
+tqdm

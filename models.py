@@ -2,12 +2,13 @@ import json
 
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.ext.hybrid import hybrid_property
+from sqlalchemy_repr import PrettyRepresentableBase
 
 import pandas as pd
 
 from biorxiv_scraper import baseurl
 
-db = SQLAlchemy()
+db = SQLAlchemy(model_class=PrettyRepresentableBase)
 
 class Biorxiv(db.Model):
     source          = db.Column(db.String(10), default='biorxiv')
@@ -18,6 +19,7 @@ class Biorxiv(db.Model):
     _parse_data     = db.Column('parse_data', db.String)
     _pages          = db.Column('pages', db.String, default='[]', nullable=False)
     page_count      = db.Column('page_count', db.Integer, default=0, nullable=False)
+    posted_date     = db.Column(db.String(10))
     _author_contact = db.Column('author_contact', db.String)
     email_sent      = db.Column(db.Integer)
 
@@ -66,6 +68,13 @@ class Biorxiv(db.Model):
     @hybrid_property
     def url(self):
         return baseurl(self.id)
+
+    @hybrid_property
+    def pdf_url(self):
+        date = self.posted_date.replace('-', '/')
+        id_no_ver = self.id.split('v')[0]
+        base_url = "https://www.biorxiv.org/content/biorxiv/early/{}/{}.full.pdf"
+        return base_url.format(date, id_no_ver)
 
 class Test(Biorxiv):
     pass

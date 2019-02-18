@@ -3,6 +3,7 @@ gevent
 
 flask
 Flask-SQLAlchemy
+sqlalchemy-repr
 Flask-RQ2
 Flask-Mail
 Flask-table
@@ -13,11 +14,7 @@ pymysql
 tweepy
 pandas
 
-portalocker
-retry
-
 pytest
 pytest-cov
 codecov
 
-tqdm

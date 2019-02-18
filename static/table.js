@@ -3,7 +3,8 @@ $(document).ready(function() {
     columns: [
         { name: 'expand'},
         { name: 'title', "width": "65%" },
-        { name: 'link' },
+        { name: 'date', "width": "15%" },
+        { name: 'link'},
         { name: 'status' },
         { name: 'authors' },
     ],

@@ -1,29 +1,25 @@
 // Initiate conversion of images.
 // Separate call for which pages and retrieving images
 function retrieve_previews(id, all_pages = false) {
-  info = $('#infotemplate').clone();
-  info.removeAttr('id');
+  info = $('#infotemplate').clone().removeAttr('id');
   p_preview = info.find(".paperpreview");
 
-  detail_link = info.find(".detail_link");
-  detail_link.attr("href", '/detail/' + id);
+  // add link to details page
+  info.find(".detail_link").attr("href", '/detail/' + id);
 
-  function insertPages(pgs) {
-    Object.keys(pgs).map(function(pg, index) {
-      status = pgs[pg];
-      pvt = $('#pgpreviewtempl').clone();
-      pvt.removeAttr('id');
+  function insertPages(data) {
+    pdf_url = data['pdf_url'];
+    $.each(data['pages'], function(pg, status) {
+
+      pvt = $('#pgpreviewtempl').clone().removeAttr('id');
 
       // add link to page in pdf
-      a_link = pvt.find("a");
-      a_link.attr("href",
-        'http://biorxiv.org/cgi/content/short/' + id + '.pdf#page=' + pg
-      );
+      pvt.find("a").attr("href", pdf_url + '#page=' + pg);
 
       // call to retrieve page and insert it
       p_preview.append(pvt);
 
-      if (status == "true")
+      if (status == true)
         pvt.find("a").children().addClass("preview-detected");
       else
         pvt.find("a").children().addClass("preview-notdetected");
@@ -41,10 +37,9 @@ function retrieve_previews(id, all_pages = false) {
   }
 
   // get page numbers to show and initiate callback
+  url = "/pages/" + id;
   if (all_pages)
-    url = "/pages/" + id + "?all=1";
-  else
-    url = "/pages/" + id;
+    url += "?all=1";
 
   $.ajax({
     url : url,

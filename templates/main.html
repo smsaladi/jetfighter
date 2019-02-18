@@ -60,6 +60,7 @@
     <tr class="text-center">
       <th>View Results</th>
       <th>Title</th>
+      <th>Date Posted</th>
       <th>Paper Link</th>
       <th>Parse Status</th>
       {% if session['logged_in'] %}
@@ -75,6 +76,7 @@
       <td class="details-control align-middle"></td>
 
         <td class="align-middle">{{ p.title }}</td>
+        <td class="text-center align-middle">{{ p.posted_date }}</td>
 
         <td class="text-center align-middle">
           <a href="{{ p.url }}" target="_blank">

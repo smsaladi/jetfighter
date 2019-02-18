@@ -11,7 +11,7 @@ When done poorly, this transformation introduces well-established visual artifac
 
 Unfortunately, widely-used rainbow colormaps, like "jet", face these issues but are pervasive in the scientific literature. Jetfighter aims to prevent this by detecting problematic colormaps in publically available pre-print manuscripts and then contacting the authors, if necessary. 
 
-Explore recently screened manuscripts here, and check out a companion website that provides a solution for published figures, [fixthejet.caltech.edu](fixthejet.caltech.edu), as well!
+Explore recently screened manuscripts here, and check out a companion website that provides a solution for published figures, [fixthejet.ecrlife.org](fixthejet.ecrlife.org), as well!
 
 
 ## To-do 
@@ -25,8 +25,7 @@ Explore recently screened manuscripts here, and check out a companion website th
 
 ## Other notes
 
-Worker non-pip dependencies
-    - [poppler](https://poppler.freedesktop.org/) for `pdftoppm`
+* pdf url resolver needs to be cloned into the repo for works (submodule)
 
 * a number of config vars need to be in `.env` and are handled on Heroku with [heroku-config](https://github.com/xavdid/heroku-config)
 

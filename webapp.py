@@ -5,43 +5,29 @@ import os
 import os.path
 import re
 import math
-import tempfile
 import itertools
-import base64
-
-import gevent.monkey
-gevent.monkey.patch_all()
 
 import flask
-from flask import Flask
 from flask_rq2 import RQ
 from flask_mail import Mail, Message
 from flask_wtf.csrf import CSRFProtect, CSRFError
 
 from sqlalchemy import desc
 
-import click
 import tweepy
 
+import click
 import pytest
 
-try:
-    from PyPDF2 import PdfFileReader
-except:
-    print('Calculations will fail if this is a worker')
-
-from tqdm import tqdm
-
 from models import db, Biorxiv, Test
-from biorxiv_scraper import find_authors, download_paper
-from detect_cmap import convert_to_img, detect_rainbow_from_file
-
+from biorxiv_scraper import find_authors, find_date, count_pages
+from detect_cmap import detect_rainbow_from_iiif
 import utils
 
 # Reads env file into environment, if found
 _ = utils.read_env()
 
-app = Flask(__name__)
+app = flask.Flask(__name__)
 app.config['BASE_URL'] = os.environ['BASE_URL']
 
 # For data storage
@@ -105,7 +91,7 @@ def home():
 
 @app.route('/pages/<string:paper_id>')
 def pages(paper_id, prepost=1, maxshow=10):
-    """Returns base64 encoded image intended for ajax calls only
+    """Pages to show for preview
     1-index I think...
     """
     record = Biorxiv.query.filter_by(id=paper_id).first()
@@ -115,32 +101,31 @@ def pages(paper_id, prepost=1, maxshow=10):
     pages = record.pages
     page_count = record.page_count
 
-    # find pages before and after (requested or default)
-    try:
-        prepost = math.fabs(int(flask.request.args.get('prepost')))
-    except:
-        pass
-
-    # find pages before and after (requested or default)
-    try:
-        maxshow = math.fabs(int(flask.request.args.get('maxshow')))
-    except:
-        pass
+    # Unused, reconsider later...?
+    # # find pages before and after (requested or default)
+    # try:
+    #     prepost = math.fabs(int(flask.request.args.get('prepost')))
+    # except:
+    #     pass
+    # try:
+    #     maxshow = math.fabs(int(flask.request.args.get('maxshow')))
+    # except:
+    #     pass
 
     # if requested, show all pages with each page's status
     try:
-        all_pages = math.fabs(int(flask.request.args.get('all')))
-        if int(all_pages) == 1:
-            show_pgs = {i:True for i in pages[:maxshow]}
-            for i in range(page_count):
-                if i not in show_pgs:
-                    show_pgs[i] = False
-            return flask.jsonify(show_pgs)
+        all_pages = flask.request.args.get('all') == "1"
     except:
-        pass
+        all_pages = False
 
     show_pgs = {}
-    if pages:
+    if all_pages:
+        for i in range(1, page_count + 1):
+            if i in pages:
+                show_pgs[i] = True
+            else:
+                show_pgs[i] = False
+    elif pages:
         # add all detected pages up to maxshow count
         show_pgs = {i:True for i in pages[:maxshow]}
         # pad with undetected pages
@@ -150,35 +135,11 @@ def pages(paper_id, prepost=1, maxshow=10):
                     if j not in pages:
                         show_pgs[j] = False
                 else:
-                    return flask.jsonify(show_pgs)
+                    break
     else:
         show_pgs = {i:False for i in range(1, maxshow + 1)}
 
-    return flask.jsonify(show_pgs)
-
-@app.route('/preview/<string:paper_id>/<int:pg>')
-def preview(paper_id, pg):
-    """Returns base64 encoded image intended for ajax calls only
-    """
-    img_data = None
-
-    # download and convert paper to images
-    # delete those pages that aren't shown
-    pdf_fn = "static/previews/{}.pdf".format(paper_id)
-    if not os.path.exists(pdf_fn):
-        pdf_fn = download_paper(paper_id, "static/previews/")
-
-    for pg_fn in convert_to_img(pdf_fn, outdir='static/previews/', format='jpeg',
-        other_opt=['-f', str(pg), '-l', str(pg), '-jpegopt', 'quality=50,progressive=y', '-scale-to', '350']):
-        if re.match(".*\-0*{}".format(pg), pg_fn):
-            with open(pg_fn, "rb") as fh:
-                img_data = fh.read()
-            break
-
-    b64img = 'data:image/jpg;base64,' + base64.b64encode(img_data).decode("utf-8")
-
-    return flask.jsonify(b64img)
-# flask.render_template('preview_img.html', b64img=b64img)
+    return flask.jsonify({'pdf_url': record.pdf_url, 'pages': show_pgs})
 
 @app.route('/detail/<string:paper_id>')
 def show_details(paper_id, prepost=1, maxshow=10):
@@ -274,16 +235,17 @@ def toggle_status(paper_id):
     else:
         return flask.jsonify(result=False, message="not logged in")
 
+"""
 @app.route('/rerun', methods=['GET', 'POST'])
 @app.route('/rerun/<string:paper_id>', methods=['POST'])
 def rerun_web(paper_id=None):
-    """Requeue jobs from the web interface
+    ""Requeue jobs from the web interface
 
     If only a single paper, then do this synchronously.
     If all (i.e. paper_id == None), then do this on the queue
     to avoid delaying the redirect.
 
-    """
+    ""
     if flask.session.get('logged_in'):
         if paper_id is None:
             _rerun.queue(paper_id)
@@ -303,6 +265,7 @@ def rerun_web(paper_id=None):
     else:
         flask.flash("Not logged in")
         return flask.redirect('/login')
+"""
 
 @app.route('/login', methods=['GET', 'POST'])
 def admin_login():
@@ -391,31 +354,29 @@ def retrieve_timeline():
             trim_user='True', include_entities=True, tweet_mode='extended'):
         parse_tweet(t)
 
-def page_count(fn):
-    with open(fn, 'rb') as fh:
-        return PdfFileReader(fh).getNumPages()
 
 @rq.job(timeout='30m')
 def process_paper(obj):
     """Processes paper starting from url/code
 
-    1. download paper
-    2. check for rainbow colormap
+    1. get object, find page count and posted date
+    3. detect rainbow
     3. if rainbow, get authors
     4. update database entry with colormap detection and author info
     """
-    obj = db.session.merge(obj)
-    with tempfile.TemporaryDirectory() as td:
-        fn = download_paper(obj.id, outdir=td)
-        obj.pages, obj.parse_data = detect_rainbow_from_file(fn)
-        obj.page_count = page_count(fn)
-        if len(obj.pages) > 0:
-            obj.parse_status = 1
-            obj.author_contact = find_authors(obj.id)
-        else:
-            obj.parse_status = -1
-        db.session.merge(obj)
-        db.session.commit()
+    # obj = db.session.merge(obj)
+    obj.page_count = count_pages(obj.id)
+    obj.posted_date = find_date(obj.id)
+    obj.pages, obj.parse_data = detect_rainbow_from_iiif(obj.id, obj.page_count)
+
+    if len(obj.pages) > 0:
+        obj.parse_status = 1
+        obj.author_contact = find_authors(obj.id)
+    else:
+        obj.parse_status = -1
+
+    db.session.merge(obj)
+    db.session.commit()
 
 
 ## NOTE: NEEDS WORK
@@ -454,57 +415,5 @@ def test_integration(test_setup_cleanup):
         'o.borkowski@imperial.ac.uk', 'carlos.bricio@gmail.com',
         'g.stan@imperial.ac.uk', 't.ellis@imperial.ac.uk'])
 
-@rq.job()
-def _rerun(paper_id=None):
-    """Rerun some or all papers in database
-    """
-    n_queue = 0
-    if paper_id:
-        rec = Biorxiv.query.filter_by(id=paper_id).first()
-        if rec:
-            process_paper.queue(rec)
-            n_queue += 1
-        else:
-            return -1
-    else:
-        for rec in Biorxiv.query.filter(
-                        Biorxiv.parse_status.in_([-1, 0, 1])
-                        ).all():
-            process_paper.queue(rec)
-            n_queue += 1
-    return n_queue
-
-
-@app.cli.command()
-@click.argument('paper_ids', nargs=-1, default=None, required=False)
-@click.option('--all', is_flag=True)
-@click.option('--now', is_flag=True)
-def rerun(paper_ids, all=False, now=False):
-    """Rerun some or all papers in database
-    """
-    n_queue = 0
-
-    if all:
-        for rec in tqdm(Biorxiv.query.all()):
-            process_paper.queue(rec)
-    else:
-        if paper_ids and len(paper_ids) > 0:
-            for p in paper_ids:
-                if now:
-                    rec = Biorxiv.query.filter_by(id=p).first()
-                    process_paper(rec)
-                else:
-                    if _rerun(p) == -1:
-                        print("paper_id {} not found".format(p))
-                    else:
-                        n_queue += 1
-        else:
-            n_queue = _rerun()
-
-    print("Queued {} jobs".format(n_queue))
-
-    return
-
-
 if __name__ == "__main__":
-    app.run(debug=True, threaded=True, use_reloader=False)
+    app.run(debug=True, threaded=True, use_reloader=True)
