@@ -153,7 +153,9 @@ def show_details(paper_id, prepost=1, maxshow=10):
     # Format colormap for viewing
     df_cm = record.parse_data
     if df_cm.size > 0:
-        df_cm['fn'] = df_cm['fn'].str.split('-', n=1).str[1]
+        df_cm['fn'] = df_cm['fn'].astype(str)
+        if df_cm['fn'].str.contains('-').any():
+            df_cm['fn'] = df_cm['fn'].str.split('-', n=1).str[1]
         df_cm['pct_cm'] = df_cm['pct_cm'] * 100
         df_cm['pct_page'] = df_cm['pct_page'] * 100
     df_cm = df_cm[['cm', 'fn', 'pct_cm', 'pct_page']]
