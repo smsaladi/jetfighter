@@ -16,7 +16,7 @@ except:
     print('Calculations will fail if this is a worker')
 
 def baseurl(code):
-    return 'http://biorxiv.org/cgi/content/short/{}'.format(code)
+    return 'https://www.biorxiv.org/content/10.1101/{}'.format(code)
 
 def req(url):
     http = urllib3.PoolManager()

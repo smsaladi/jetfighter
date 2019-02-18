@@ -10,8 +10,7 @@ colorspacious
 
 joblib
 
-requests
-requests-cache
+urllib3
 lxml
 BeautifulSoup4
 
