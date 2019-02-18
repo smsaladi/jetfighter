@@ -208,7 +208,7 @@ def notify_authors(paper_id, force=0):
             pages=record.pages_str,
             title=record.title,
             detail_url=flask.url_for('show_details', paper_id=paper_id))
-        mail.send(msg)
+        utils.send_async_email(app, mail, msg)
 
         record.email_sent = 1
         db.session.merge(record)

@@ -1,8 +1,23 @@
 import os
 import os.path
 
+from threading import Thread
 from functools import wraps
 from flask import request, Response
+
+
+def async(f):
+    def wrapper(*args, **kwargs):
+        thr = Thread(target=f, args=args, kwargs=kwargs)
+        thr.start()
+    return wrapper
+
+@async
+def send_async_email(app, mail, msg):
+    with app.app_context():
+        print("sending mail")
+        # mail.send(msg)
+        pass
 
 
 def read_env(fn='.env', dir=os.path.dirname(os.path.abspath(__file__))):
