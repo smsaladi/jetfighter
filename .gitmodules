@@ -1,0 +1,3 @@
+[submodule "iiif-biorxiv"]
+	path = iiif-biorxiv
+	url = git@github.com:smsaladi/iiif-biorxiv.git
