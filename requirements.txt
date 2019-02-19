@@ -1,6 +1,8 @@
 gunicorn
 gevent
 
+newrelic
+
 flask
 Flask-SQLAlchemy
 sqlalchemy-repr
