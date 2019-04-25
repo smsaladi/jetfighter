@@ -1,0 +1,33 @@
+{
+  "@context": "https://doi.org/10.5063/schema/codemeta-2.0",
+  "@type": "SoftwareSourceCode",
+  "codeRepository": "https://github.com/smsaladi/jetfighter",
+  "issueTracker": "https://github.com/smsaladi/jetfighter/issues",
+  "developmentStatus": "active",
+  "downloadUrl": "https://github.com/smsaladi/jetfighter/archive/v0.0.1.zip"
+  "name": "jetfighter",
+  "author": [
+    {
+      "nameType": "Personal",
+      "name": "Saladi, Shyam M.",
+      "givenName": "Shyam M.",
+      "familyName": "Saladi",
+      "nameIdentifiers": [
+        {
+          "nameIdentifier": "https://orcid.org/0000-0001-9701-3059",
+          "schemeUri": "https://orcid.org",
+          "nameIdentifierScheme": "ORCID"
+        }
+      ],
+      "affiliation": "Caltech"
+    }
+  ],
+  "description": "Fix rainbow colormaps before it's too late!",
+  "version": "v0.0.1",
+  "tags": [
+    "GitHub",
+    "Colormap",
+    "jet"
+  ],
+  "license":"https://spdx.org/licenses/MIT"
+}
