@@ -4,6 +4,7 @@ README
 [![Build Status](https://travis-ci.org/smsaladi/jetfighter.svg?branch=master)](https://travis-ci.org/smsaladi/jetfighter)
 [![codecov](https://codecov.io/gh/smsaladi/jetfighter/branch/master/graph/badge.svg)](https://codecov.io/gh/smsaladi/jetfighter)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![DOI](https://data.caltech.edu/badge/127026246.svg)](https://data.caltech.edu/badge/latestdoi/127026246)
 
 Scientists co-opt our visual system to convey numerical data in a format that's easily understandable using spatial and color variation to capture details of the underlying data. A “colormap” transforms the set of numbers into a pattern of plotted colors. 
 
