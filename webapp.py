@@ -343,8 +343,8 @@ def parse_tweet(t, db=db, objclass=Biorxiv, verbose=True):
     obj = db.session.merge(obj)
     db.session.commit()
 
-    # don't reprocess papers that have already been entered
-    if obj.title is None:
+    # Only add to queue if not yet processed
+    if obj.parse_status == 0:
         process_paper.queue(obj)
 
 
