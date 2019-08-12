@@ -403,7 +403,7 @@ def test_integration(test_setup_cleanup):
     Check for written authors.
     """
 
-    testq = rq.Queue('testq', async=False)
+    testq = rq.Queue('testq', is_async=False)
 
     preobj = Test(id='172627v1')
     testq.enqueue(process_paper, preobj)
