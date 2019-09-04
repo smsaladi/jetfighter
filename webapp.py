@@ -9,6 +9,7 @@ import itertools
 
 import flask
 from flask_rq2 import RQ
+import rq_dashboard
 from flask_mail import Mail, Message
 from flask_wtf.csrf import CSRFProtect, CSRFError
 
@@ -36,8 +37,12 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = True
 db.init_app(app)
 
 # For job handling
-app.config['RQ_REDIS_URL'] = os.environ['RQ_REDIS_URL']
+app.config.from_object(rq_dashboard.default_settings)
+app.config['REDIS_URL'] = app.config['RQ_REDIS_URL'] = os.environ['RQ_REDIS_URL']
+app.config['RQ_DASHBOARD_USERNAME'] = 'admin'
+app.config['RQ_DASHBOARD_PASSWORD'] = os.environ['WEB_PASSWORD']
 rq = RQ(app)
+app.register_blueprint(rq_dashboard.blueprint, url_prefix="/rq")
 
 # For monitoring papers (until Biorxiv provides a real API)
 app.config['TWITTER_APP_KEY'] = os.environ['TWITTER_APP_KEY']
