@@ -349,11 +349,13 @@ def parse_tweet(t, db=db, objclass=Biorxiv, verbose=True):
 
 
 @app.cli.command()
-def retrieve_timeline():
+@click.option('--count', default=500)
+def retrieve_timeline(count):
     """Picks up current timeline (for testing)
     """
-    for t in tweepy_api.user_timeline(screen_name='biorxivpreprint', count=1000,
-            trim_user='True', include_entities=True, tweet_mode='extended'):
+    for t in tweepy.Cursor(tweepy_api.user_timeline,
+            screen_name='biorxivpreprint', trim_user='True',
+            include_entities=True, tweet_mode='extended').items(count):
         parse_tweet(t)
 
 
