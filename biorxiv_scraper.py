@@ -19,7 +19,7 @@ def baseurl(code):
     return 'https://www.biorxiv.org/content/10.1101/{}'.format(code)
 
 def req(url):
-    http = urllib3.PoolManager()
+    http = urllib3.PoolManager(cert_reqs='CERT_NONE', assert_hostname=False)
     page = http.request('get', url, timeout=120)
     return page.data.decode('utf-8')
 
