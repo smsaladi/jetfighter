@@ -6,6 +6,7 @@ import os.path
 import re
 import math
 import itertools
+from datetime import datetime, timedelta
 
 import flask
 from flask_rq2 import RQ
@@ -81,8 +82,15 @@ def home():
     else:
         cats = [-2, -1, 1, 2]
 
+    days = flask.request.args.get('days')
+    if days:
+        days = int(days)
+    else:
+        days = 3
+    delta_days = datetime.now() - timedelta(days=days)
+
     papers = (Biorxiv.query
-                     .filter(Biorxiv.parse_status.in_(cats))
+                     .filter(Biorxiv.parse_status.in_(cats), Biorxiv.created >= delta_days)
                      .order_by(desc(Biorxiv.created))
                      .limit(500)
                      .all())
