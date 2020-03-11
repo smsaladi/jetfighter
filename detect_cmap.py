@@ -4,11 +4,8 @@
 import os
 import os.path
 import argparse
-import urllib
-
-import tempfile
-import subprocess
 import glob
+import urllib
 import itertools
 
 try:
@@ -17,45 +14,13 @@ try:
     from sklearn.neighbors import NearestNeighbors
 
     import skimage.io
+    import skimage.color
     import matplotlib.pyplot as plt
     from colorspacious import cspace_convert
 except:
     print('Calculations will fail if this is a worker')
 
 IIIF_HOST = os.environ.get('IIIF_HOST', 'iiif-biorxiv.saladi.org')
-
-def convert_to_img(fn, format='png', other_opt=[], outdir=None):
-    """Converts each page of the pdf to a png file.
-        If `out` is None, make one for the meantime
-    """
-    if outdir:
-        td = None
-    else:
-        td = tempfile.TemporaryDirectory()
-        outdir = td.name
-
-    basen = os.path.basename(fn)
-    basen = os.path.splitext(basen)[0]
-    outpre = os.path.join(outdir, basen)
-
-    #other_opt = ['-' + k, v for k, v in kwargs.items()]
-    if format == 'png':
-        ext = format
-    elif format == 'jpeg':
-        ext = 'jpg'
-    else:
-        raise ValueError("Only jpg, png supported by pdftoppm")
-
-    # TODO: check if/which images to rerender
-    subprocess.check_call(['pdftoppm', '-' + format, *other_opt, fn, outpre])
-
-    for pg in glob.iglob(outpre + '*.' + ext):
-        yield pg
-
-    # If tempdir was created, then clean it up
-    if td:
-        td.cleanup()
-
 
 def parse_img(fn, name=None):
     """Parses an image file into a dataframe of R, G, B color counts
@@ -68,7 +33,13 @@ def parse_img(fn, name=None):
         raise e
 
     # Check that we have an RGB array (as opposed to grayscale/RGBA)
-    assert im.shape[2] == 3
+    # Nothing to parse if grayscale
+    if len(im.shape) == 2 or im.shape[2] < 3:
+        return pd.DataFrame()
+    
+    # Convert to RGB if RGBA
+    if im.shape[2] == 4:
+        im = skimage.color.rgba2rgb(im)
 
     # Remove white and black first (large reduction in size of array)
     # NOTE: assumes an 8-bit image
@@ -214,24 +185,12 @@ def detect_rainbow_from_colors(df_colors, cm_thresh=0.5, debug=None):
 
     return pgs_w_rainbow.tolist(), df_cmap
 
-
-def test_detect_rainbow_from_file():
-    pgs, _ = detect_rainbow_from_file('test/172627_short.pdf')
-    assert np.array_equal(pgs, [3, 7, 8, 9])
-    if 1 in pgs:
-        print("FYI, the jet image on page 1 is successfully detected."
-              "Change this assertion!")
-    else:
-        print("FYI, the jet image on page 1 isn't detected")
-
-
-def detect_rainbow_from_file(fn, debug=False):
-    """Full paper processing code (from file to detection)
+def detect_rainbow_from_iiif(paper_id, pages, debug=False):
+    """Pull images from iiif server
     """
-
-    df = pd.concat([parse_img(p) for p in convert_to_img(fn)],
-        ignore_index=True, copy=False)
-
+    url = "https://{}/iiif/2/biorxiv:{}.pdf/full/full/0/default.png?page={}"
+    data = [parse_img(url.format(IIIF_HOST, paper_id, pg), str(pg)) for pg in range(1, pages+1)]
+    df = pd.concat(data, ignore_index=True, copy=False)
     return detect_rainbow_from_colors(df)
 
 
@@ -245,28 +204,25 @@ def test_detect_rainbow_from_iiif():
     else:
         print("FYI, the jet image on page 1 isn't detected")
 
-def detect_rainbow_from_iiif(paper_id, pages, debug=False):
-    """Pull images from iiif server
+def test_detect_cmap():
+    """Tests using local files incase theres an issue with the iiif-server
     """
-
-    print(paper_id, pages)
-
-    url = "https://{}/iiif/2/biorxiv:{}.pdf/full/full/0/default.png?page={}"
-    data = [parse_img(url.format(IIIF_HOST, paper_id, pg), str(pg)) for pg in range(1, pages+1)]
-    df = pd.concat(data, ignore_index=True, copy=False)
-
-    return detect_rainbow_from_colors(df)
+    fns = glob.glob("test/172627-0*")
+    df = pd.concat([parse_img(x) for x in fns], ignore_index=True, copy=False)
+    has_rainbow, data = detect_rainbow_from_colors(df)
+    assert np.array_equal(has_rainbow, [4, 12, 14, 16])
+    return
 
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument('pdf_file')
-    parser.add_argument('--debug', action='store_true')
+    parser.add_argument('images', nargs='+')
     args = parser.parse_args()
 
-    has_rainbow, data = detect_rainbow_from_file(args.pdf_file, args.debug)
-    print('Has rainbow:', has_rainbow)
-
+    df = pd.concat([parse_img(x) for x in args.images], ignore_index=True, copy=False)
+    if df.size > 0:
+        has_rainbow, data = detect_rainbow_from_colors(df)
+        print('Has rainbow:', has_rainbow)
     return
 
 if __name__ == '__main__':
