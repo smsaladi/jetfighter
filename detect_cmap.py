@@ -1,6 +1,7 @@
 """Convert pdf a dataframe of color counts by page
 """
 
+import os
 import os.path
 import argparse
 import urllib
@@ -20,6 +21,8 @@ try:
     from colorspacious import cspace_convert
 except:
     print('Calculations will fail if this is a worker')
+
+IIIF_HOST = os.environ.get('IIIF_HOST', 'iiif-biorxiv.saladi.org')
 
 def convert_to_img(fn, format='png', other_opt=[], outdir=None):
     """Converts each page of the pdf to a png file.
@@ -248,8 +251,8 @@ def detect_rainbow_from_iiif(paper_id, pages, debug=False):
 
     print(paper_id, pages)
 
-    url = "https://iiif-biorxiv.saladi.org/iiif/2/biorxiv:{}.full.pdf/full/full/0/default.png?page={}"
-    data = [parse_img(url.format(paper_id, pg), str(pg)) for pg in range(1, pages+1)]
+    url = "https://{}/iiif/2/biorxiv:{}.full.pdf/full/full/0/default.png?page={}"
+    data = [parse_img(url.format(IIIF_HOST, paper_id, pg), str(pg)) for pg in range(1, pages+1)]
     df = pd.concat(data, ignore_index=True, copy=False)
 
     return detect_rainbow_from_colors(df)

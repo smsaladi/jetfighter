@@ -2,6 +2,7 @@
     Utility functions for scraping biorxiv
 """
 
+import os
 import re
 import importlib
 
@@ -14,6 +15,8 @@ try:
     iiif_biorxiv = importlib.import_module('iiif-biorxiv.app')
 except:
     print('Calculations will fail if this is a worker')
+
+IIIF_HOST = os.environ.get('IIIF_HOST', 'iiif-biorxiv.saladi.org')
 
 def baseurl(code):
     return 'https://www.biorxiv.org/content/10.1101/{}'.format(code)
@@ -55,8 +58,8 @@ def count_pages(paper_id):
     """cantaloupe iiif server returns the highest page index with an error
     if out of range is requested
     """
-    url = "https://iiif-biorxiv.saladi.org/iiif/2/biorxiv:{}.full.pdf/full/500,/0/default.jpg?page=1000"
-    url = url.format(paper_id)
+    url = "https://{}/iiif/2/biorxiv:{}.full.pdf/full/500,/0/default.jpg?page=1000"
+    url = url.format(IIIF_HOST, paper_id)
     page = req(url)
     count = re_pg.findall(page)[0]
     return int(count)

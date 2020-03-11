@@ -69,6 +69,8 @@ tweepy_auth.set_access_token(
     app.config['TWITTER_KEY'], app.config['TWITTER_SECRET'])
 tweepy_api = tweepy.API(tweepy_auth)
 
+app.config['IIIF_HOST'] = os.environ.get('IIIF_HOST', 'iiif-biorxiv.saladi.org')
+
 mail = Mail(app)
 
 @app.route('/')
@@ -96,6 +98,12 @@ def home():
                      .all())
 
     return flask.render_template('main.html', app=app, papers=papers)
+
+@app.route('/iiif/<string:paper_id>/page/<string:page>/<path:iiif_path>')
+def iiif_resolver(paper_id, page, iiif_path):
+    url = "https://{host}/iiif/2/biorxiv:{paper_id}.pdf/{iiif_path}?page={page}"
+    url = url.format(host=app.config['IIIF_HOST'], paper_id=paper_id, iiif_path=iiif_path, page=page)
+    return flask.redirect(url)
 
 @app.route('/pages/<string:paper_id>')
 def pages(paper_id, prepost=1, maxshow=10):
