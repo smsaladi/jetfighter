@@ -71,10 +71,7 @@ class Biorxiv(db.Model):
 
     @hybrid_property
     def pdf_url(self):
-        date = self.posted_date.replace('-', '/')
-        id_no_ver = self.id.split('v')[0]
-        base_url = "https://www.biorxiv.org/content/biorxiv/early/{}/{}.full.pdf"
-        return base_url.format(date, id_no_ver)
+        return "https://www.biorxiv.org/content/10.1101/{}.full.pdf".format(self.id)
 
 class Test(Biorxiv):
     pass
