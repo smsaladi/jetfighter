@@ -10,6 +10,7 @@ from datetime import datetime, timedelta
 
 import flask
 from flask_rq2 import RQ
+import rq_dashboard
 from flask_mail import Mail, Message
 from flask_wtf.csrf import CSRFProtect, CSRFError
 
@@ -38,7 +39,14 @@ db.init_app(app)
 
 # For job handling
 app.config['RQ_REDIS_URL'] = os.environ['RQ_REDIS_URL']
+app.config['REDIS_URL'] = os.environ['RQ_REDIS_URL']
 rq = RQ(app)
+
+@rq_dashboard.blueprint.before_request
+def before_request():
+    if not flask.session.get('logged_in'):
+        return flask.redirect('/login')
+app.register_blueprint(rq_dashboard.blueprint, url_prefix="/rq")
 
 # For monitoring papers (until Biorxiv provides a real API)
 app.config['TWITTER_APP_KEY'] = os.environ['TWITTER_APP_KEY']
