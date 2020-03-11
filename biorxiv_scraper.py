@@ -58,7 +58,7 @@ def count_pages(paper_id):
     """cantaloupe iiif server returns the highest page index with an error
     if out of range is requested
     """
-    url = "https://{}/iiif/2/biorxiv:{}.full.pdf/full/500,/0/default.jpg?page=1000"
+    url = "https://{}/iiif/2/biorxiv:{}.pdf/full/500,/0/default.jpg?page=1000"
     url = url.format(IIIF_HOST, paper_id)
     page = req(url)
     count = re_pg.findall(page)[0]
