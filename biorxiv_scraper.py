@@ -27,31 +27,31 @@ def req(url):
     return page.data.decode('utf-8')
 
 def test_find_authors():
-    assert find_authors('121814') == \
+    assert find_authors('121814v1') == \
         {'all': ['raul.peralta@uaem.mx'], 'corr': ['raul.peralta@uaem.mx']}
 
 re_at = re.compile('\{at\}')
 def find_authors(code):
     """Retrieves page and captures author emails as list of strings
     """
-    url = baseurl(code) + '.article-info'
+    url = baseurl(code)
     page = req(url)
     soup = BeautifulSoup(page, 'lxml')
+    addr = [t.attrs.get('content', None) 
+            for t in soup.find_all("meta", {"name": "citation_author_email"})]
+    
+    # corresponding authors will have their email under another tag too
+    corr = [t.find('a').attrs.get('href', None)
+            for t in soup.find_all(None, {"class": "author-corresp-email-link"})]
 
-    addr = soup(text=re_at)
-    addr = [t.replace('{at}', '@') for t in addr]
+    addr = [a for a in addr if a is not None]
+    corr = [a.replace('mailto:', '') for a in corr if a is not None]
 
-    # corresponding authors will have their email listed in more than 1 place
-    corr = list(set([x for x in addr if addr.count(x) > 1]))
-    # if not, use the last author
-    if not corr:
-        corr = [addr[-1]]
-
-    return dict(corr=corr, all=list(set(addr)))
+    return dict(corr=list(set(corr)), all=list(set(addr)))
 
 
 def test_count_pages():
-    assert count_pages('515643v1') == 44
+    assert count_pages('515643v1') == 43
 
 re_pg = re.compile(r'Index \d+ out of bounds for length (\d+)')
 def count_pages(paper_id):
@@ -74,3 +74,4 @@ def find_date(paper_id):
 
     text = soup.find_all("meta", {"name": "DC.Date"})[0]
     return text.attrs['content']
+
