@@ -251,7 +251,7 @@ def detect_rainbow_from_iiif(paper_id, pages, debug=False):
 
     print(paper_id, pages)
 
-    url = "https://{}/iiif/2/biorxiv:{}.full.pdf/full/full/0/default.png?page={}"
+    url = "https://{}/iiif/2/biorxiv:{}.pdf/full/full/0/default.png?page={}"
     data = [parse_img(url.format(IIIF_HOST, paper_id, pg), str(pg)) for pg in range(1, pages+1)]
     df = pd.concat(data, ignore_index=True, copy=False)
 
